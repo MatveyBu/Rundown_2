@@ -1,0 +1,25 @@
+{
+  "name": "rundown_2",
+  "version": "1.0.0",
+  "description": "For university students who want to connect and expand. Rundown is a web-based forum that allows users to find lost student ID cards, look for subleases around campus, and easily communicate with peers. College settings and students made unique.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MatveyBu/Rundown_2.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/MatveyBu/Rundown_2/issues"
+  },
+  "homepage": "https://github.com/MatveyBu/Rundown_2#readme",
+  "dependencies": {
+    "express": "^5.1.0",
+    "express-handlebars": "^8.0.3"
+  }
+}
