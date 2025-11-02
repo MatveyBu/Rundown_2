@@ -10,7 +10,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Handlebars
-const hbs = create({
+const hbs = handlebars.create({
   extname: '.hbs',
   layoutsDir: path.join(__dirname, 'views', 'layouts'),
   partialsDir: path.join(__dirname, 'views', 'partials'),
@@ -20,6 +20,15 @@ app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
 
 //routes
+//redirect to login
+app.get('/', (req, res) => {
+  return res.redirect('/login');
+});
+
+//get login
+app.get('/login', (req, res) => {
+  res.render('pages/login', { layout: 'main' });
+});
 
 app.listen(3000);
 console.log('Server is listening on port 3000');
