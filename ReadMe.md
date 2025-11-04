@@ -19,7 +19,8 @@ We have three major roles: admins, moderators, and users. Admins will control th
 * Ryan Murray (@ryanmm123)
 * Alfie Whitemore (@awhitemore)
 * Nikhil Pudtha (@nipu345)
-* Baden Miles
+* Baden Miles (@bami6878)
+* RJ Wiebe
 
 **Technology Stack used for the project**
 
@@ -32,6 +33,12 @@ We have three major roles: admins, moderators, and users. Admins will control th
 
 **How to run the tests**
 
+```bash
+cd ProjectSourceCode
+npm install
+node index.js
+```
+for development mode. Should run on port 3000
 
 **Link to the deployed application**
 
