@@ -34,6 +34,89 @@ body {
   padding: 0 1.5rem;
 }
 
+/* Profile Header */
+.profile-header {
+  background-color: var(--cu-white);
+  border-bottom: 2px solid var(--cu-gold);
+  padding: 1rem 0;
+  box-shadow: 0 2px 8px var(--cu-shadow);
+}
+
+.profile-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.profile-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--cu-black);
+}
+
+.profile-logo img {
+  height: 40px;
+  width: auto;
+}
+
+.profile-user {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--cu-gold) 0%, var(--cu-gold-dark) 100%);
+  color: var(--cu-black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  border: 2px solid var(--cu-gold);
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-weight: 600;
+  color: var(--cu-black);
+  font-size: 0.95rem;
+}
+
+.user-role {
+  font-size: 0.8rem;
+  color: #666;
+  text-transform: capitalize;
+  background-color: var(--cu-gold);
+  color: var(--cu-black);
+  padding: 0.1rem 0.5rem;
+  border-radius: 0.25rem;
+  display: inline-block;
+  width: fit-content;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
 /* Hero Section */
 .hero-section {
   background: linear-gradient(135deg, var(--cu-black) 0%, var(--cu-dark-gray) 100%);
