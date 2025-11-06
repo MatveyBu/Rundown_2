@@ -40,3 +40,11 @@ CREATE TABLE post_likes(
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
     FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE
 );
+
+CREATE TABLE Colleges (
+    college_id INT AUTO_INCREMENT PRIMARY KEY,
+    college_name VARCHAR(150) NOT NULL,
+    location VARCHAR(150),
+    domain VARCHAR(100)
+);
+
