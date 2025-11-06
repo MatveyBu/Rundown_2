@@ -20,6 +20,7 @@ We have three major roles: admins, moderators, and users. Admins will control th
 * Alfie Whitemore (@awhitemore)
 * Nikhil Pudtha (@nipu345)
 * Baden Miles (@bami6878)
+* RJ (Roger) Wiebe (@RJ-Wiebe)
 
 **Technology Stack used for the project**
 
