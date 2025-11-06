@@ -19,6 +19,12 @@
               <p class="text-secondary mb-4">University of Colorado Boulder</p>
             </div>
 
+            {{#if error}}
+            <div class="alert alert-danger" role="alert">
+              {{error}}
+            </div>
+            {{/if}}
+
             <form action="/login" method="POST" class="needs-validation" novalidate>
               <div class="form-floating mb-3">
                 <input

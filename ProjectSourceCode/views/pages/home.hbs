@@ -1,4 +1,36 @@
 <div class="home-wrapper">
+  <!-- Profile Header -->
+  <div class="profile-header">
+    <div class="container">
+      <div class="profile-nav">
+        <div class="profile-logo">
+          <img 
+            src="https://upload.wikimedia.org/wikipedia/en/thumb/d/d3/Colorado_Buffaloes_logo.svg/1200px-Colorado_Buffaloes_logo.svg.png" 
+            alt="CU Boulder" 
+            height="40"
+          />
+          <span>Rundown</span>
+        </div>
+        <div class="profile-user">
+          <div class="user-info">
+            <div class="user-avatar">
+              {{#if user.name}}
+                {{substring user.name 0 1}}
+              {{else}}
+                U
+              {{/if}}
+            </div>
+            <div class="user-details">
+              <div class="user-name">{{user.name}}</div>
+              <div class="user-role">{{user.role}}</div>
+            </div>
+          </div>
+          <a href="/logout" class="btn btn-sm btn-outline-cu">Logout</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Hero Section -->
   <section class="hero-section">
     <div class="container">
