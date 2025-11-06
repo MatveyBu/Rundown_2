@@ -4,7 +4,7 @@ const handlebars = require('express-handlebars');
 const Handlebars = require('handlebars');
 const path = require('path');
 const session = require('express-session');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const pgp = require('pg-promise')(); // To connect to the Postgres DB from the node server
 
 // Connect to DB
@@ -121,27 +121,27 @@ app.get('/login', (req, res) => {
 //post login
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
-  
+
   // Find user
   const user = plainUsers.find(u => u.username === username);
-  
+
   if (!user) {
-    return res.render('pages/login', { 
-      layout: 'main', 
+    return res.render('pages/login', {
+      layout: 'main',
       error: 'Invalid username or password',
-      username 
+      username
     });
   }
-  
+
   // Check password (in production, use bcrypt.compare)
   if (password !== user.password) {
-    return res.render('pages/login', { 
-      layout: 'main', 
+    return res.render('pages/login', {
+      layout: 'main',
       error: 'Invalid username or password',
-      username 
+      username
     });
   }
-  
+
   // Create session
   req.session.user = {
     username: user.username,
@@ -150,8 +150,16 @@ app.post('/login', async (req, res) => {
     email: user.email,
     community: user.community
   };
-  
+
   res.redirect('/home');
+});
+
+// Register
+app.post('/register', async (req, res) => {
+  //hash the password using bcrypt library
+  const hash = await bcrypt.hash(req.body.password, 10);
+
+  // To-DO: Insert username and hashed password into the 'users' table
 });
 
 //logout
@@ -162,8 +170,8 @@ app.get('/logout', (req, res) => {
 
 //get home (protected route)
 app.get('/home', isAuthenticated, (req, res) => {
-  res.render('pages/home', { 
-    layout: 'main', 
+  res.render('pages/home', {
+    layout: 'main',
     title: 'Home',
     user: req.session.user
   });
@@ -171,6 +179,22 @@ app.get('/home', isAuthenticated, (req, res) => {
 
 app.get('/welcome', (req, res) => {
   res.json({ status: 'success', message: 'Welcome!' });
+});
+
+app.use(auth);
+
+app.get('/profile', (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).send('Not authenticated');
+  }
+  try {
+    res.status(200).json({
+      username: req.session.user.username,
+    });
+  } catch (err) {
+    console.error('Profile error:', err);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
 module.exports = app.listen(3000);
