@@ -1,0 +1,18 @@
+1. User should be able to login with correct credentials.
+    -The user will submit their username/email and password. Scenario is user is trying to log back into their profile
+    -We test the feature with the database and whether the password matches the hash
+    -Environment: local host for now until cloud is discussed
+    -Expected results: Pass verification and get back to home screen with fully updated profile
+    -Testers are any users regardless of role but must have logged in previously, we will create fake profiles to simulate this
+2. User registration fails when the user provides invalid credentials.
+    -User will submit username, password, and school email into a form that submits to try to create a new user object
+    -Use an api to verify school email is real, verify username is unique.
+    -Environment: local host for now until cloud is discussed
+    -The results should be a newly created user within their corresponding university college rundown page
+    -We create fake users to send emails and register
+3. If a user is banned, the user is prompted with a message and there are no missing components.
+    -A user has been banned from a community by a moderator or admin for profane language in any sense or cyberbullying
+    -Test data: banned user’s username, community, banned message
+    -Environment: local host for now until cloud is discussed
+    -Expected results are the banned user getting a message that they have been banned and they don’t have access to certain areas
+    -Test items include a user who gets banned, admin who does banning, message that detects profanity, and community in which message was posted
