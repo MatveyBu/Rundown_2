@@ -1,0 +1,354 @@
+/* CU Boulder Colors */
+:root {
+  --cu-gold: #CFB87C;
+  --cu-gold-light: #e0cc9b;
+  --cu-gold-dark: #b89d5f;
+  --cu-black: #000000;
+  --cu-dark-gray: #1f1f1f;
+  --cu-light-gray: #f5f5f5;
+  --cu-white: #ffffff;
+  --cu-shadow: rgba(0, 0, 0, 0.1);
+}
+
+/* Reset & Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.6;
+  color: var(--cu-black);
+  background-color: var(--cu-white);
+}
+
+.home-wrapper {
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* Hero Section */
+.hero-section {
+  background: linear-gradient(135deg, var(--cu-black) 0%, var(--cu-dark-gray) 100%);
+  color: var(--cu-white);
+  padding: 4rem 0 5rem;
+  text-align: center;
+}
+
+.hero-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.hero-logo {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  margin-bottom: 1.5rem;
+  filter: drop-shadow(0 4px 8px rgba(207, 184, 124, 0.3));
+}
+
+.hero-title {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: var(--cu-gold);
+  letter-spacing: -0.02em;
+}
+
+.hero-subtitle {
+  font-size: 1.5rem;
+  font-weight: 400;
+  margin-bottom: 1rem;
+  color: var(--cu-white);
+}
+
+.hero-description {
+  font-size: 1.125rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 2rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  padding: 0.875rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+
+.btn-primary-cu {
+  background-color: var(--cu-gold);
+  color: var(--cu-black);
+  border-color: var(--cu-gold);
+}
+
+.btn-primary-cu:hover {
+  background-color: var(--cu-gold-light);
+  border-color: var(--cu-gold-light);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(207, 184, 124, 0.4);
+}
+
+.btn-secondary-cu {
+  background-color: transparent;
+  color: var(--cu-white);
+  border-color: var(--cu-gold);
+}
+
+.btn-secondary-cu:hover {
+  background-color: var(--cu-gold);
+  color: var(--cu-black);
+  transform: translateY(-2px);
+}
+
+.btn-outline-cu {
+  background-color: transparent;
+  color: var(--cu-black);
+  border: 2px solid var(--cu-gold);
+}
+
+.btn-outline-cu:hover {
+  background-color: var(--cu-gold);
+  color: var(--cu-black);
+  transform: translateY(-2px);
+}
+
+/* Section Titles */
+.section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  color: var(--cu-black);
+  text-align: center;
+}
+
+/* Quick Links Section */
+.quick-links-section {
+  padding: 4rem 0;
+  background-color: var(--cu-light-gray);
+}
+
+.quick-links-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.quick-link-card {
+  background-color: var(--cu-white);
+  border: 2px solid transparent;
+  border-radius: 0.75rem;
+  padding: 2rem;
+  text-align: center;
+  text-decoration: none;
+  color: var(--cu-black);
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px var(--cu-shadow);
+}
+
+.quick-link-card:hover {
+  border-color: var(--cu-gold);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(207, 184, 124, 0.3);
+}
+
+.card-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.quick-link-card h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--cu-black);
+}
+
+.quick-link-card p {
+  font-size: 0.95rem;
+  color: #666;
+  margin: 0;
+}
+
+/* Activity Section */
+.activity-section {
+  padding: 4rem 0;
+  background-color: var(--cu-white);
+}
+
+.activity-list {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.activity-card {
+  background-color: var(--cu-white);
+  border: 1px solid #e5e5e5;
+  border-left: 4px solid var(--cu-gold);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.activity-card:hover {
+  box-shadow: 0 4px 16px var(--cu-shadow);
+  transform: translateX(4px);
+}
+
+.activity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.activity-community {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background-color: var(--cu-gold);
+  color: var(--cu-black);
+  border-radius: 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.activity-time {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.activity-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--cu-black);
+}
+
+.activity-preview {
+  font-size: 0.95rem;
+  color: #666;
+  margin: 0;
+}
+
+/* Stats Section */
+.stats-section {
+  padding: 3rem 0;
+  background-color: var(--cu-black);
+  color: var(--cu-white);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  text-align: center;
+}
+
+.stat-item {
+  padding: 1rem;
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--cu-gold);
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}
+
+/* Utility Classes */
+.text-center {
+  text-align: center;
+}
+
+.mt-4 {
+  margin-top: 2rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.25rem;
+  }
+
+  .hero-description {
+    font-size: 1rem;
+  }
+
+  .hero-logo {
+    width: 80px;
+    height: 80px;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+  }
+
+  .quick-links-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stat-number {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-section {
+    padding: 3rem 0 4rem;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .btn {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .quick-links-section,
+  .activity-section {
+    padding: 3rem 0;
+  }
+}
