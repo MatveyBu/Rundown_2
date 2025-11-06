@@ -6,6 +6,12 @@ const path = require('path');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const pgp = require('pg-promise')(); // To connect to the Postgres DB from the node server
+const auth = (req, res, next) => {
+  if (!req.session.user) {
+    return res.status(401).send('Not authenticated');
+  }
+  next();
+};
 
 // Connect to DB
 const dbConfig = {
