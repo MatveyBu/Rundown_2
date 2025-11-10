@@ -66,3 +66,9 @@ CREATE TABLE Colleges (
     domain VARCHAR(100)
 );
 
+CREATE TABLE verification_tokens(
+    token VARCHAR(100) PRIMARY KEY,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+

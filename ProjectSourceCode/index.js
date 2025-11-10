@@ -5,6 +5,8 @@ const Handlebars = require('handlebars');
 const path = require('path');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+const transporter = require('./email');
 const pgp = require('pg-promise')(); // To connect to the Postgres DB from the node server
 const auth = (req, res, next) => {
   if (!req.session.user) {
@@ -160,6 +162,40 @@ app.post('/login', async (req, res) => {
   res.redirect('/home');
 });
 
+app.post('/verify-email', async (req, res) => {
+  const { email } = req.body;
+  const token = crypto.randomBytes(32).toString('hex');
+  await db.none('INSERT INTO verification_tokens (email, token) VALUES ($1, $2)', [email, token]);
+  const mailOptions = {
+    from: 'dhilonprasad@gmail.com',
+    to: email,
+    subject: 'Verification Email',
+    text: 'Please verify your email by clicking the link below: http://localhost:3000/verify-email?token=' + token
+  };
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.error('Error sending email:', error);
+      return res.status(500).send('Error sending email');
+    }
+    return res.status(200).send('Email sent');
+  });
+});
+
+app.get('/verify-email', async (req, res) => {
+  const { token } = req.query;
+  const verificationToken = await db.one('SELECT * FROM verification_tokens WHERE token = $1', [token]);
+  if (!verificationToken) {
+    return res.render('pages/verify-email', {
+      layout: 'main',
+      error: 'Invalid token'
+    });
+  }
+  await db.none('DELETE FROM verification_tokens WHERE token = $1', [token]);
+  res.render('pages/verify-email', {
+    layout: 'main',
+    success: 'Email verified'
+  });
+});
 // Register
 app.post('/register', async (req, res) => {
   //hash the password using bcrypt library

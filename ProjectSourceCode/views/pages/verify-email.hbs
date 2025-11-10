@@ -1,0 +1,12 @@
+{{#if success}}
+<div class="alert alert-success" role="alert">
+    {{success}}
+    <a href="/welcome" class="btn btn-primary">Welcome</a>
+</div>
+{{/if}}
+{{#if error}}
+<div class="alert alert-danger" role="alert">
+    {{error}}
+    <a href="/login" class="btn btn-primary">Login</a>
+</div>
+{{/if}}
