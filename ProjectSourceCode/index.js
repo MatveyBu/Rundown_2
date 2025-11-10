@@ -162,24 +162,6 @@ app.post('/login', async (req, res) => {
   res.redirect('/home');
 });
 
-app.post('/verify-email', async (req, res) => {
-  const { email } = req.body;
-  const token = crypto.randomBytes(32).toString('hex');
-  await db.none('INSERT INTO verification_tokens (email, token) VALUES ($1, $2)', [email, token]);
-  const mailOptions = {
-    from: 'dhilonprasad@gmail.com',
-    to: email,
-    subject: 'Verification Email',
-    text: 'Please verify your email by clicking the link below: http://localhost:3000/verify-email?token=' + token
-  };
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.error('Error sending email:', error);
-      return res.status(500).send('Error sending email');
-    }
-    return res.status(200).send('Email sent');
-  });
-});
 
 app.get('/verify-email', async (req, res) => {
   const { token } = req.query;
@@ -200,6 +182,22 @@ app.get('/verify-email', async (req, res) => {
 app.post('/register', async (req, res) => {
   //hash the password using bcrypt library
   const hash = await bcrypt.hash(req.body.password, 10);
+  const { email } = req.body;
+  const token = crypto.randomBytes(32).toString('hex');
+  await db.none('INSERT INTO verification_tokens (email, token) VALUES ($1, $2)', [email, token]);
+  const mailOptions = {
+    from: 'dhilonprasad@gmail.com',
+    to: email,
+    subject: 'Verification Email',
+    text: 'Please verify your email by clicking the link below: http://localhost:3000/verify-email?token=' + token
+  };
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.error('Error sending email:', error);
+      return res.json({ status: 'error', message: 'Error sending email. Please try again.' });
+    }
+    return res.json({ status: 'success', message: 'Email sent. Please check your email for verification.' });
+  });
 
   // To-DO: Insert username and hashed password into the 'users' table
 });
