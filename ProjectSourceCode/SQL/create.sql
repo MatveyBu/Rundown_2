@@ -59,13 +59,6 @@ CREATE TABLE post_likes(
     FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE
 );
 
-CREATE TABLE Colleges (
-    college_id INT AUTO_INCREMENT PRIMARY KEY,
-    college_name VARCHAR(150) NOT NULL,
-    location VARCHAR(150),
-    domain VARCHAR(100)
-);
-
 CREATE TABLE verification_tokens(
     token VARCHAR(100) PRIMARY KEY,
     email VARCHAR(100) UNIQUE NOT NULL,
