@@ -8,7 +8,7 @@ const bcrypt = require('bcryptjs');
 const pgp = require('pg-promise')(); // To connect to the Postgres DB from the node server
 const auth = (req, res, next) => {
   if (!req.session.user) {
-    return res.status(401).send('Not authenticated');
+    return res.redirect(302, '/login');
   }
   next();
 };
@@ -49,37 +49,13 @@ app.use(session({
 
 // Mock user database with three user types
 // In production, this would be in a real database
-const users = [
-  {
-    username: 'user1',
-    password: '$2b$10$YourHashedPasswordHere1', // password: 'user123'
-    role: 'user',
-    name: 'John Doe',
-    email: 'user1@colorado.edu'
-  },
-  {
-    username: 'moderator1',
-    password: '$2b$10$YourHashedPasswordHere2', // password: 'mod123'
-    role: 'moderator',
-    name: 'Jane Smith',
-    email: 'moderator1@colorado.edu',
-    community: 'Housing'
-  },
-  {
-    username: 'admin1',
-    password: '$2b$10$YourHashedPasswordHere3', // password: 'admin123'
-    role: 'admin',
-    name: 'Admin User',
-    email: 'admin1@colorado.edu'
-  }
-];
 
 // For demo purposes, let's use plain text passwords (NEVER do this in production!)
 // We'll hash them on startup
 const plainUsers = [
-  { username: 'user1', password: 'user123', role: 'user', name: 'John Doe', email: 'user1@colorado.edu' },
-  { username: 'moderator1', password: 'mod123', role: 'moderator', name: 'Jane Smith', email: 'moderator1@colorado.edu', community: 'Housing' },
-  { username: 'admin1', password: 'admin123', role: 'admin', name: 'Admin User', email: 'admin1@colorado.edu' }
+  { username: 'user1', password: 'user123', role: 'user', first_name: 'John', last_name: 'Doe', email: 'user1@colorado.edu' },
+  { username: 'moderator1', password: 'mod123', role: 'moderator', first_name: 'Jane', last_name: 'Smith', email: 'moderator1@colorado.edu', community: 'Housing' },
+  { username: 'admin1', password: 'admin123', role: 'admin', first_name: 'Admin', last_name: 'User', email: 'admin1@colorado.edu'}
 ];
 
 // Middleware to check if user is authenticated
@@ -188,6 +164,10 @@ app.get('/welcome', (req, res) => {
 });
 
 app.use(auth);
+
+app.get('/test', (req, res) => {
+  res.send('Welcome to the protected Test Page!');
+});
 
 app.get('/profile', (req, res) => {
   if (!req.session.user) {
