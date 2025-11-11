@@ -190,6 +190,20 @@ app.post('/register', async (req, res) => {
   const username = req.body.username;
   const { email } = req.body;
   const token = crypto.randomBytes(32).toString('hex');
+  if (await db.one('SELECT * FROM users WHERE username = $1', [username])) {
+    res.status(400).send({ message: 'Username already exists. Please try again.' });
+    return res.render('pages/register', {
+      layout: 'main',
+      error: 'Username already exists. Please try again.'
+    });
+  }
+  if (await db.one('SELECT * FROM users WHERE email = $1', [email])) {
+    res.status(400).send({ message: 'Email already exists. Please try again.' });
+    return res.render('pages/register', {
+      layout: 'main',
+      error: 'Email already exists. Please try again.'
+    });
+  }
   await db.none('INSERT INTO verification_tokens (email, token, username, password) VALUES ($1, $2, $3, $4)', [email, token, username, hash]);
   const mailOptions = {
     from: 'dhilonprasad@gmail.com',
@@ -200,9 +214,11 @@ app.post('/register', async (req, res) => {
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
       console.error('Error sending email:', error);
-      return res.json({ status: 'error', message: 'Error sending email. Please try again.' });
+      res.status(500).send({ message: 'Error sending email. Please try again.' });
+      return;
     }
-    return res.json({ status: 'success', message: 'Email sent. Please check your email for verification.' });
+    res.status(200).send({ message: 'Email sent. Please check your email for verification.' });
+    return;
   });
 
   // To-DO: Insert username and hashed password into the 'users' table
