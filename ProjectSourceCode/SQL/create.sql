@@ -7,7 +7,7 @@ CREATE TABLE colleges ( --users references this so it needs to get created first
     logo VARCHAR(100), --URL of the college logo
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
+--Required for registration are username, email, and password
 CREATE TABLE users (
 	user_id SERIAL PRIMARY KEY,
     full_name VARCHAR(100),

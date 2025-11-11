@@ -1,16 +1,16 @@
 const express = require('express'); // To build an application server or API
 const app = express();
 const handlebars = require('express-handlebars');
-const Handlebars = require('handlebars');
 const path = require('path');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const transporter = require('./email');
 const pgp = require('pg-promise')(); // To connect to the Postgres DB from the node server
+
 const auth = (req, res, next) => {
   if (!req.session.user) {
-    return res.status(401).send('Not authenticated');
+    return res.status(302).redirect('/login');
   }
   next();
 };
@@ -37,6 +37,7 @@ db.connect()
   });
 
 //for form post requests
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 //static files middleware for serving CSS, JS, images, etc.
 app.use(express.static(path.join(__dirname, 'public')));
@@ -51,37 +52,13 @@ app.use(session({
 
 // Mock user database with three user types
 // In production, this would be in a real database
-const users = [
-  {
-    username: 'user1',
-    password: '$2b$10$YourHashedPasswordHere1', // password: 'user123'
-    role: 'user',
-    name: 'John Doe',
-    email: 'user1@colorado.edu'
-  },
-  {
-    username: 'moderator1',
-    password: '$2b$10$YourHashedPasswordHere2', // password: 'mod123'
-    role: 'moderator',
-    name: 'Jane Smith',
-    email: 'moderator1@colorado.edu',
-    community: 'Housing'
-  },
-  {
-    username: 'admin1',
-    password: '$2b$10$YourHashedPasswordHere3', // password: 'admin123'
-    role: 'admin',
-    name: 'Admin User',
-    email: 'admin1@colorado.edu'
-  }
-];
 
 // For demo purposes, let's use plain text passwords (NEVER do this in production!)
 // We'll hash them on startup
 const plainUsers = [
-  { username: 'user1', password: 'user123', role: 'user', name: 'John Doe', email: 'user1@colorado.edu' },
-  { username: 'moderator1', password: 'mod123', role: 'moderator', name: 'Jane Smith', email: 'moderator1@colorado.edu', community: 'Housing' },
-  { username: 'admin1', password: 'admin123', role: 'admin', name: 'Admin User', email: 'admin1@colorado.edu' }
+  { username: 'user1', password: 'user123', role: 'user', first_name: 'John', last_name: 'Doe', email: 'user1@colorado.edu' },
+  { username: 'moderator1', password: 'mod123', role: 'moderator', first_name: 'Jane', last_name: 'Smith', email: 'moderator1@colorado.edu', community: 'Housing' },
+  { username: 'admin1', password: 'admin123', role: 'admin', first_name: 'Admin', last_name: 'User', email: 'admin1@colorado.edu'}
 ];
 
 // Middleware to check if user is authenticated
@@ -89,7 +66,7 @@ const isAuthenticated = (req, res, next) => {
   if (req.session.user) {
     next();
   } else {
-    res.redirect('/login');
+    res.status(302).redirect('/login');
   }
 };
 
@@ -173,7 +150,7 @@ app.get('/verify-email', async (req, res) => {
     });
   }
   await db.one('INSERT INTO users (email, password, username) VALUES ($1, $2, $3)', [verificationToken.email, verificationToken.password, verificationToken.username]);
-  const user = await db.one('SELECT * FROM users WHERE username = $1', [verificationToken.username]);
+  const user = await db.none('SELECT * FROM users WHERE username = $1', [verificationToken.username]);
   req.session.user = {
     username: user.username,
     role: 'user',
@@ -185,24 +162,25 @@ app.get('/verify-email', async (req, res) => {
 });
 // Register
 app.post('/register', async (req, res) => {
-
-  const { email, username, password } = req.body;
+  const {email,username,password} = req.body;
+  console.log(email,username,password);
   const token = crypto.randomBytes(32).toString('hex');
-  if (await db.one('SELECT * FROM users WHERE username = $1', [username])) {
+  if (await db.any('SELECT * FROM users WHERE username = $1', [username])) {
     res.status(400).send({ message: 'Username already exists. Please try again.' });
     return res.render('pages/register', {
       layout: 'main',
       error: 'Username already exists. Please try again.'
     });
   }
-  if (await db.one('SELECT * FROM users WHERE email = $1', [email])) {
+  console.log("After username check");
+  if (await db.any('SELECT * FROM users WHERE email = $1', [email])) {
     res.status(400).send({ message: 'Email already exists. Please try again.' });
     return res.render('pages/register', {
       layout: 'main',
       error: 'Email already exists. Please try again.'
     });
   }
-
+  console.log("After validation checks");
   const hash = await bcrypt.hash(password, 10);
   await db.none('INSERT INTO verification_tokens (email, token, username, password) VALUES ($1, $2, $3, $4)', [email, token, username, hash]);
   const mailOptions = {
@@ -211,6 +189,7 @@ app.post('/register', async (req, res) => {
     subject: 'Verification Email',
     text: 'Please verify your email by clicking the link below: http://localhost:3000/verify-email?token=' + token
   };
+  console.log("After email");
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
       console.error('Error sending email:', error);
@@ -273,6 +252,10 @@ app.get('/welcome', (req, res) => {
 });
 
 app.use(auth);
+
+app.get('/test', (req, res) => {
+  res.send('Welcome to the protected Test Page!');
+});
 
 app.get('/profile', (req, res) => {
   if (!req.session.user) {
