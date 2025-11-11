@@ -14,12 +14,18 @@
         <div class="profile-user">
           <div class="user-info">
             <div class="user-avatar">
-              {{#if user.name}}
-                {{substring user.name 0 1}}
+              {{#if user.profile_picture}}
+                <img src="{{user.profile_picture}}" alt="Avatar"
+                    class="rounded-circle" width="36" height="36" style="object-fit:cover;">
               {{else}}
-                U
+                {{#if user.name}}
+                  {{substring user.name 0 1}}
+                {{else}}
+                  U
+                {{/if}}
               {{/if}}
             </div>
+
             <div class="user-details">
               <div class="user-name">{{user.name}}</div>
               <div class="user-role">{{user.role}}</div>

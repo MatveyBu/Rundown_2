@@ -183,6 +183,35 @@ app.get('/home', isAuthenticated, (req, res) => {
   });
 });
 
+//get profile 
+app.get('/profile', isAuthenticated, (req, res) => {
+  req.session.user.bio = req.session.user.bio || '';
+  req.session.user.profile_picture = req.session.user.profile_picture || '';
+
+  res.render('pages/profile', {
+    layout: 'main',
+    title: 'My Profile',
+    user: req.session.user
+  });
+});
+
+//post profile for bio and PFP
+app.post('/profile', isAuthenticated, (req, res) => {
+  const { bio, avatar_url, profile_picture } = req.body;
+
+  req.session.user.bio = (bio || '').trim();
+  req.session.user.profile_picture = (avatar_url || profile_picture || '').trim();
+
+  // refresh page with saved message
+  res.render('pages/profile', {
+    layout: 'main',
+    title: 'My Profile',
+    user: req.session.user,
+    saved: true
+  });
+});
+
+
 app.get('/welcome', (req, res) => {
   res.json({ status: 'success', message: 'Welcome!' });
 });
