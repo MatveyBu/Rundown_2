@@ -186,8 +186,7 @@ app.get('/verify-email', async (req, res) => {
 // Register
 app.post('/register', async (req, res) => {
 
-  const username = req.body.username;
-  const { email } = req.body;
+  const { email, username, password } = req.body;
   const token = crypto.randomBytes(32).toString('hex');
   if (await db.one('SELECT * FROM users WHERE username = $1', [username])) {
     res.status(400).send({ message: 'Username already exists. Please try again.' });
@@ -204,7 +203,6 @@ app.post('/register', async (req, res) => {
     });
   }
 
-  const password = req.body.password;
   const hash = await bcrypt.hash(password, 10);
   await db.none('INSERT INTO verification_tokens (email, token, username, password) VALUES ($1, $2, $3, $4)', [email, token, username, hash]);
   const mailOptions = {
