@@ -1,0 +1,34 @@
+# What's New
+
+## User Accounts & Authentication
+- Added full login functionality supporting three user types and personalized profile headers.  
+- Implemented user creation and registration flows with integrated email verification.  
+- Combined `first_name` and `last_name` into a single `full_name` column for improved database consistency.  
+- Enhanced error handling for invalid email and username inputs.  
+
+## Profile & Community Features
+- Developed profile pages that display user bio and profile pictures, with session-based support.  
+- Introduced the ability to post and support other users directly from the home page.  
+- Added structure for future community and interaction functionality.  
+
+## Database and SQL Enhancements
+- Updated SQL schema for production with new table structures.  
+- Connected backend SQL with application entry points for smoother integration.  
+- Added a new `college` table in `create.sql` to support extended data relationships.  
+
+## Testing & Quality Improvements
+- Expanded and revised test cases for core features; now passing most unit tests.  
+- Combined and refactored export and middleware logic to streamline testing.  
+- Improved readability and syntax in various modules.  
+
+## Bug Fixes
+- Fixed small syntax issues that affected readability and execution.  
+- Resolved middleware bugs impacting login and user validation.  
+- Fixed column naming inconsistencies across database layers.  
+- Adjusted test cases to align with updated schema and functionality.  
+- Fixed issues in registration where email validation and posting flow failed to complete.  
+
+## General Improvements
+- Merged multiple feature branches and resolved merge conflicts to unify the development branch.  
+- Updated documentation and project structure for better team collaboration.  
+- Minor UI and SQL optimizations for performance and maintainability.  
