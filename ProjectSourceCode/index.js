@@ -1,16 +1,16 @@
 const express = require('express'); // To build an application server or API
 const app = express();
 const handlebars = require('express-handlebars');
-const Handlebars = require('handlebars');
 const path = require('path');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const transporter = require('./email');
 const pgp = require('pg-promise')(); // To connect to the Postgres DB from the node server
+
 const auth = (req, res, next) => {
   if (!req.session.user) {
-    return res.redirect(302, '/login');
+    return res.status(302).redirect('/login');
   }
   next();
 };
@@ -37,6 +37,7 @@ db.connect()
   });
 
 //for form post requests
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 //static files middleware for serving CSS, JS, images, etc.
 app.use(express.static(path.join(__dirname, 'public')));
@@ -65,7 +66,7 @@ const isAuthenticated = (req, res, next) => {
   if (req.session.user) {
     next();
   } else {
-    res.redirect('/login');
+    res.status(302).redirect('/login');
   }
 };
 
@@ -162,22 +163,24 @@ app.get('/verify-email', async (req, res) => {
 // Register
 app.post('/register', async (req, res) => {
   const {email,username,password} = req.body;
+  console.log(email,username,password);
   const token = crypto.randomBytes(32).toString('hex');
-  if (await db.one('SELECT * FROM users WHERE username = $1', [username])) {
+  if (await db.any('SELECT * FROM users WHERE username = $1', [username])) {
     res.status(400).send({ message: 'Username already exists. Please try again.' });
     return res.render('pages/register', {
       layout: 'main',
       error: 'Username already exists. Please try again.'
     });
   }
-  if (await db.one('SELECT * FROM users WHERE email = $1', [email])) {
+  console.log("After username check");
+  if (await db.any('SELECT * FROM users WHERE email = $1', [email])) {
     res.status(400).send({ message: 'Email already exists. Please try again.' });
     return res.render('pages/register', {
       layout: 'main',
       error: 'Email already exists. Please try again.'
     });
   }
-
+  console.log("After validation checks");
   const hash = await bcrypt.hash(password, 10);
   await db.none('INSERT INTO verification_tokens (email, token, username, password) VALUES ($1, $2, $3, $4)', [email, token, username, hash]);
   const mailOptions = {
@@ -186,6 +189,7 @@ app.post('/register', async (req, res) => {
     subject: 'Verification Email',
     text: 'Please verify your email by clicking the link below: http://localhost:3000/verify-email?token=' + token
   };
+  console.log("After email");
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
       console.error('Error sending email:', error);
