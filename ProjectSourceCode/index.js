@@ -185,8 +185,7 @@ app.get('/verify-email', async (req, res) => {
 });
 // Register
 app.post('/register', async (req, res) => {
-  //hash the password using bcrypt library
-  const hash = await bcrypt.hash(req.body.password, 10);
+
   const username = req.body.username;
   const { email } = req.body;
   const token = crypto.randomBytes(32).toString('hex');
@@ -204,6 +203,9 @@ app.post('/register', async (req, res) => {
       error: 'Email already exists. Please try again.'
     });
   }
+
+  const password = req.body.password;
+  const hash = await bcrypt.hash(password, 10);
   await db.none('INSERT INTO verification_tokens (email, token, username, password) VALUES ($1, $2, $3, $4)', [email, token, username, hash]);
   const mailOptions = {
     from: 'dhilonprasad@gmail.com',
