@@ -172,19 +172,25 @@ app.get('/verify-email', async (req, res) => {
       error: 'Invalid token'
     });
   }
+  await db.one('INSERT INTO users (email, password, username) VALUES ($1, $2, $3)', [verificationToken.email, verificationToken.password, verificationToken.username]);
+  const user = await db.one('SELECT * FROM users WHERE username = $1', [verificationToken.username]);
+  req.session.user = {
+    username: user.username,
+    role: 'user',
+    name: user.name,
+    email: user.email,
+  };
   await db.none('DELETE FROM verification_tokens WHERE token = $1', [token]);
-  res.render('pages/verify-email', {
-    layout: 'main',
-    success: 'Email verified'
-  });
+  return res.redirect('/home');
 });
 // Register
 app.post('/register', async (req, res) => {
   //hash the password using bcrypt library
   const hash = await bcrypt.hash(req.body.password, 10);
+  const username = req.body.username;
   const { email } = req.body;
   const token = crypto.randomBytes(32).toString('hex');
-  await db.none('INSERT INTO verification_tokens (email, token) VALUES ($1, $2)', [email, token]);
+  await db.none('INSERT INTO verification_tokens (email, token, username, password) VALUES ($1, $2, $3, $4)', [email, token, username, hash]);
   const mailOptions = {
     from: 'dhilonprasad@gmail.com',
     to: email,
