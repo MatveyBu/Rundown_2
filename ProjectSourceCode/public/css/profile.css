@@ -33,3 +33,16 @@
   color: var(--cu-buff); font-weight: 600;
 }
 .btn-outline-cu:hover{ background: var(--cu-buff); color:#111827; }
+.pfp{
+  width: 75px; height: 75px; border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--cu-buff);
+  background: #fff;
+}
+.pfp-fallback{
+  width: 75px; height: 75px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--cu-buff); color: #111;
+  font-weight: 700; font-size: 1.1rem;
+  border: 2px solid var(--cu-buff);
+}
