@@ -14,7 +14,6 @@
   border: 1px solid rgba(0,0,0,.06);
   border-radius: .8rem;
   background: rgba(255,255,255,.92);
-  backdrop-filter: blur(8px);
 }
 
 .btn-cu{
