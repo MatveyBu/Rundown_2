@@ -56,11 +56,6 @@ app.use(session({
   cookie: { secure: false } // set to true if using https
 }));
 
-app.use((req, res, next) => {
-  res.locals.user = req.session.user;
-  next();
-});
-
 // Mock user database with three user types
 // In production, this would be in a real database
 
@@ -120,22 +115,6 @@ app.engine('hbs', hbs.engine);
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
 
-//Navbar
-/*
-app.get("/navbar-test", (req, res) => {
-  res.render("partials/navbar");
-});
-*/
-
-app.get("/search", (req, res) => {
-  const query = req.query.q;
-
-  console.log("Search query:", query);
-
-  res.send("You searched for: " + query);
-});
-
-
 //routes
 //redirect to login
 app.get('/', (req, res) => {
@@ -157,35 +136,143 @@ app.get('/login', (req, res) => {
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
-  // Find user
-  const user = plainUsers.find(u => u.username === username);
+  try {
+    // Validate input
+    if (!username || !password) {
+      return res.render('pages/login', {
+        layout: 'main',
+        error: 'Please provide both username and password',
+        username: username || ''
+      });
+    }
 
-  if (!user) {
+    // Find user in database
+    const user = await db.oneOrNone('SELECT * FROM users WHERE username = $1', [username]);
+
+    if (!user) {
+      console.log('Login failed: User not found:', username);
+      return res.render('pages/login', {
+        layout: 'main',
+        error: 'Invalid username or password',
+        username
+      });
+    }
+
+    // Compare plain text password with hashed password from database
+    if (!user.password) {
+      console.log('Login failed: User has no password:', username);
+      return res.render('pages/login', {
+        layout: 'main',
+        error: 'Invalid username or password',
+        username
+      });
+    }
+
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      console.log('Login failed: Invalid password for user:', username);
+      return res.render('pages/login', {
+        layout: 'main',
+        error: 'Invalid username or password',
+        username
+      });
+    }
+
+    // Create session
+    req.session.user = {
+      username: user.username,
+      user_id: user.user_id,
+      role: user.role,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      email: user.email
+    };
+
+    console.log('Login successful for user:', username);
+
+    // Redirect to home - session will be saved automatically by express-session
+    return res.redirect('/home');
+  } catch (error) {
+    console.error('Login error:', error);
     return res.render('pages/login', {
       layout: 'main',
-      error: 'Invalid username or password',
-      username
+      error: 'An error occurred. Please try again.',
+      username: username || ''
     });
   }
+});
 
-  // Check password (in production, use bcrypt.compare)
-  if (password !== user.password) {
-    return res.render('pages/login', {
+
+app.get('/verify-email', async (req, res) => {
+  const { token } = req.query;
+  const verificationToken = await db.one('SELECT * FROM verification_tokens WHERE token = $1', [token]);
+  if (!verificationToken) {
+    return res.render('pages/verify-email', {
       layout: 'main',
-      error: 'Invalid username or password',
-      username
+      error: 'Invalid token'
     });
   }
-
-  // Create session
+  await db.one('INSERT INTO users (email, password, username) VALUES ($1, $2, $3)', [verificationToken.email, verificationToken.password, verificationToken.username]);
+  const user = await db.none('SELECT * FROM users WHERE username = $1', [verificationToken.username]);
   req.session.user = {
     username: user.username,
     role: 'user',
     name: user.name,
     email: user.email,
   };
+  await db.none('DELETE FROM verification_tokens WHERE token = $1', [token]);
+  return res.redirect('/home');
+});
+// Register
+app.post('/register', async (req, res) => {
+  const { email, username, password } = req.body;
+  console.log(email, username, password);
+  const token = crypto.randomBytes(32).toString('hex');
+  const user = await db.any('SELECT * FROM users WHERE username = $1', [username])
+  if (user.length > 0) {
+    return res.status(400).send({ error: 'Username already exists. Please try again.' });
+  }
+  console.log("After username check");
+  const emailUser = await db.any('SELECT * FROM users WHERE email = $1', [email])
+  if (emailUser.length > 0) {
+    return res.status(400).send({ error: 'Email already exists. Please try again.' });
+  }
+  console.log("After validation checks");
+  const hash = await bcrypt.hash(password, 10);
+  await db.none('INSERT INTO verification_tokens (email, token, username, password) VALUES ($1, $2, $3, $4)', [email, token, username, hash]);
 
-  res.redirect('/home');
+  const mailOptions = {
+    from: 'dhilonprasad@gmail.com',
+    to: email,
+    subject: 'Verification Email',
+    text: 'Please verify your email by clicking the link below: http://localhost:3000/verify-email?token=' + token
+  };
+
+  try {
+    console.log("Sending email to:", email);
+    // Wrap sendMail in a Promise
+    await new Promise((resolve, reject) => {
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          reject(error);
+        } else {
+          console.log("Email sent successfully:", info.response);
+          resolve(info);
+        }
+      });
+    });
+    return res.status(200).send({ message: 'Email sent. Please check your email for verification.' });
+  } catch (error) {
+    console.error('Error sending email:', error);
+    console.error('Email error details:', error.message, error.code);
+    // Email failed, but user is already registered in verification_tokens
+    // For development, we can still return success, but log the error
+    // In production, you might want to handle this differently
+    return res.status(200).send({
+      message: 'Email sent. Please check your email for verification.',
+      warning: 'Email service may be temporarily unavailable'
+    });
+  }
 });
 
 //logout
@@ -199,8 +286,7 @@ app.get('/home', isAuthenticated, (req, res) => {
   res.render('pages/home', {
     layout: 'main',
     title: 'Home',
-    user: req.session.user,
-    activeHome: true
+    user: req.session.user
   });
 });
 
