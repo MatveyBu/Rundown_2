@@ -1,8 +1,9 @@
+{{! Profile page wrapper with CU color bg}}
 <section class="profile-wrap">
   <div class="container">
     <div class="row justify-content-center mt-4 mb-5">
       <div class="col-12 col-md-10 col-lg-8">
-
+        {{! Page title and back to home button}}
         <div class="d-flex justify-content-between align-items-center mb-3">
           <div class="d-flex align-items-center gap-3">
             
@@ -12,10 +13,10 @@
           </div>
           <a href="/home" class="btn btn-outline-cu btn-sm" >Return to Home Page</a>
         </div>
-
+        {{! Profile card with user info and edit form}}
         <div class="card profile-card shadow-sm" >
           <div class="card-body p-4 p-md-5">
-
+            {{! User info section}}
             <div class="d-flex align-items-center gap-4 mb-4" >
               {{#if user.profile_picture}}
                 <img src="{{user.profile_picture}}" alt="PFP" class="pfp">
@@ -24,7 +25,7 @@
                   {{#if user.name}}{{substring user.name 0 1}}{{else}}U{{/if}}
                 </div>
               {{/if}}
-
+              {{! User details}}
               <div>
                 <div>
                     <span class="h5 mb-0 fw-bold" >{{user.name}}</span>
@@ -36,7 +37,7 @@
               
               </div>
             </div>
-
+            {{! messages for save success or error}}
             {{#if saved}}<div class="alert alert-success">Changes have been saved.</div>{{/if}}
             {{#if error}}<div class="alert alert-danger">{{error}}</div>{{/if}}
 

@@ -1,3 +1,4 @@
+/* CU Boulder colors */
 :root{
   --cu-buff:  #CFB87C;
   --cu-buff-2:#e0cc9b;
@@ -5,7 +6,7 @@
 }
 
 
-
+/* Login page styles */
 .auth-cu{
   position: relative;
   min-height: 100vh;
@@ -14,7 +15,7 @@
   overflow: hidden;
   display: flex; align-items: center;
 }
-
+/* Background and overlay */
 .auth-bg{
   position: fixed; inset: 0;
   background-image: url('https://www.colorado.edu/coloradan/sites/default/files/styles/large_image_style/public/article-image/chautauqua-flatirons.jpg?itok=7Uv6EBQp');
@@ -26,21 +27,25 @@
   background: rgba(0,0,0,.48);
   z-index: -1;
 }
+/* Card styles */
 .auth-card{
   border: 1px solid rgba(255,255,255,.14);
   border-radius: .75rem;
   background: rgba(255,255,255,.92);
 }
+/* CU Logo */
 .cu-logo{ width: 72px; height: 72px; object-fit: contain; }
 
-
+/* form styles */
 .form-floating > .form-control{ border-radius: .5rem; }
 .form-floating > label{ color:#6b7280; }
+/* buttons and links */
 .btn-cu{
   background-color: var(--cu-buff);
   border-color: var(--cu-buff);
   color: #1f2937; font-weight: 600;
 }
+
 .btn-cu:hover{
   background-color: var(--cu-buff-2);
   border-color: var(--cu-buff-2);
@@ -48,6 +53,7 @@
 }
 .link-cu{ color: var(--cu-buff); }
 .link-cu:hover{ color: var(--cu-buff-2); text-decoration: underline; }
+/* Password toggle button */
 .auth-toggle{
   position:absolute; right:.75rem; top:50%;
   transform: translateY(-50%);
