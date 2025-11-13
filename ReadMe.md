@@ -33,6 +33,8 @@ We have three major roles: admins, moderators, and users. Admins will control th
 
 **How to run the tests**
 
+```npm run test ```
+runs all of our server.spec.js
 
 **Link to the deployed application**
 

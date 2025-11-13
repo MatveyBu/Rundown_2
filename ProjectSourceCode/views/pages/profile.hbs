@@ -1,0 +1,72 @@
+{{! Profile page wrapper with CU color bg}}
+<section class="profile-wrap">
+  <div class="container">
+    <div class="row justify-content-center mt-4 mb-5">
+      <div class="col-12 col-md-10 col-lg-8">
+        {{! Page title and back to home button}}
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="d-flex align-items-center gap-3">
+            
+            <div>
+              <h2>Your Rundown Profile</h2>
+            </div>
+          </div>
+          <a href="/home" class="btn btn-outline-cu btn-sm" >Return to Home Page</a>
+        </div>
+        {{! Profile card with user info and edit form}}
+        <div class="card profile-card shadow-sm" >
+          <div class="card-body p-4 p-md-5">
+            {{! User info section}}
+            <div class="d-flex align-items-center gap-4 mb-4" >
+              {{#if user.profile_picture}}
+                <img src="{{user.profile_picture}}" alt="PFP" class="pfp">
+              {{else}}
+                <div class="pfp-fallback">
+                  {{#if user.name}}{{substring user.name 0 1}}{{else}}U{{/if}}
+                </div>
+              {{/if}}
+              {{! User details}}
+              <div>
+                <div>
+                    <span class="h5 mb-0 fw-bold" >{{user.name}}</span>
+                    <span class="fw-semibold small">{{user.username}}</span>
+                </div>
+                
+                <div class="text-secondary small fw-bold" >{{user.role}}</div>
+                <div class="text-secondary small">{{user.email}}</div>
+              
+              </div>
+            </div>
+            {{! messages for save success or error}}
+            {{#if saved}}<div class="alert alert-success">Changes have been saved.</div>{{/if}}
+            {{#if error}}<div class="alert alert-danger">{{error}}</div>{{/if}}
+
+            <!--as of my push, does not affect DB -->
+            <form action="/profile" method="POST" class="row g-3">
+              <div class="col-12">
+
+                
+                <label for="avatar_url" class="form-label">Profile Image URL</label>
+                <input id="avatar_url" name="avatar_url" type="url" class="form-control" placeholder="https://example.com/..." value="{{user.profile_picture}}">
+              </div>
+
+              <div class="col-12">
+                <label for="bio" class="form-label">Bio</label>
+                
+                <textarea id="bio" name="bio" class="form-control" rows="4">{{user.bio}}</textarea>
+              </div>
+
+              <div class="col-12">
+                
+                <button type="submit" class="btn btn-cu w-100">Save Changes</button>
+              </div>
+            
+            </form>
+
+          </div>
+        </div>
+        {{> footer}}
+      </div>
+    </div>
+  </div>
+</section>

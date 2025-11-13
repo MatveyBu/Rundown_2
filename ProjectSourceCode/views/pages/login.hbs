@@ -1,4 +1,6 @@
+{{! Login page with CU Boulder branding}}
 <section class="auth-cu">
+  {{! Background and overlay visual}}
   <div class="auth-bg"></div>
   <div class="auth-overlay"></div>
 
@@ -8,6 +10,7 @@
         <div class="card auth-card shadow">
           <div class="card-body p-4 p-md-5">
             <div class="text-center mb-3">
+              {{! CU logo and headings}}
               <img
                 class="cu-logo mb-3"
                 src="https://upload.wikimedia.org/wikipedia/en/thumb/d/d3/Colorado_Buffaloes_logo.svg/1200px-Colorado_Buffaloes_logo.svg.png"
@@ -18,13 +21,13 @@
               <h1 class="h4 mb-1 fw-semibold">Rundown</h1>
               <p class="text-secondary mb-4">University of Colorado Boulder</p>
             </div>
-
+            {{! Display error message}}
             {{#if error}}
             <div class="alert alert-danger" role="alert">
               {{error}}
             </div>
             {{/if}}
-
+            {{! Login form with validation}}
             <form action="/login" method="POST" class="needs-validation" novalidate>
               <div class="form-floating mb-3">
                 <input
@@ -52,6 +55,7 @@
                   autocomplete="current-password"
                 />
                 <label for="password">Password</label>
+                {{! Password show/hide toggle button}}
                 <button class="btn btn-link p-0 auth-toggle" type="button" id="togglePw">Show</button>
                 <div class="invalid-feedback">Please enter your password.</div>
               </div>
@@ -66,9 +70,7 @@
           </div>
         </div>
 
-        <p class="text-center mt-3 small text-light text-shadow">
-          &copy; 2025 Rundown • University of Colorado Boulder
-        </p>
+        {{> footer}}
       </div>
     </div>
   </div>
@@ -89,6 +91,7 @@
 })();
 
 //password show/hide toggle
+//from bootstrap docs on custom styles
 document.getElementById('togglePw')?.addEventListener('click', () => {
   const pw = document.getElementById('password');
   const btn = document.getElementById('togglePw');
