@@ -10,7 +10,8 @@ CREATE TABLE colleges ( --users references this so it needs to get created first
 --Required for registration are username, email, and password
 CREATE TABLE users (
 	user_id SERIAL PRIMARY KEY,
-    full_name VARCHAR(100),
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
     username VARCHAR(100) UNIQUE NOT NULL,
     password VARCHAR(100),
     email VARCHAR(100) UNIQUE NOT NULL,
@@ -18,6 +19,7 @@ CREATE TABLE users (
     profile_picture VARCHAR(100), --URL of a user's profile picture
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     college_id INT,
+    bio VARCHAR(500),
     FOREIGN KEY (college_id) REFERENCES colleges(college_id) ON DELETE SET NULL
 );
 

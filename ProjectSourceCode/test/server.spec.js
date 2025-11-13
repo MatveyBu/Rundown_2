@@ -9,6 +9,8 @@ const chaiHttp = require('chai-http');
 chai.should();
 chai.use(chaiHttp);
 const { assert, expect } = chai;
+const bcryptjs = require('bcryptjs');
+
 
 // ********************** DEFAULT WELCOME TESTCASE ****************************
 
@@ -43,7 +45,7 @@ describe('Testing Add User API', () => {
         chai
             .request(server)
             .post('/register')
-            .send({user_id: 4, username: 'rickey.bobby', password: 'ricky123', email: 'ricky.bobby@example.com' })
+            .send({ user_id: 4, username: 'rickey', password: 'ricky123', email: 'ricky.ricky@example.com' })
             .end((err, res) => {
                 expect(res).to.have.status(200);
                 expect(res.body.message).to.equals('Email sent. Please check your email for verification.');
@@ -62,10 +64,10 @@ describe('Testing Add User API', () => {
         chai
             .request(server)
             .post('/register')
-            .send({user_id: 1, username: 'user1',password : 'user123', email: 'user1@colorado.edu'})
+            .send({ user_id: 1, username: 'user1', password: 'user123', email: 'user1@colorado.edu' })
             .end((err, res) => {
                 expect(res).to.have.status(400);
-                expect(res.body.message).to.equals('Username already exists. Please try again.');
+                expect(res.body.error).to.equals('Username already exists. Please try again.');
                 done();
             });
     });
@@ -77,7 +79,9 @@ describe('Testing Redirect', () => {
         chai
             .request(server)
             .get('/test')
+            .redirects(0)  // Don't follow redirects - stop at 302
             .end((err, res) => {
+                console.log(res.body);
                 res.should.have.status(302); // Expecting a redirect status code
                 res.should.redirectTo(/^.*127\.0\.0\.1.*\/login$/); // Expecting a redirect to /login with the mentioned Regex
                 done();
@@ -100,59 +104,48 @@ describe('Testing Render', () => {
 });
 
 describe('Profile Route Tests', () => {
-    let agent;
-    const testUser = {
-        username: 'testuser',
-        password: 'testpass123',
-    };
-
-    before(async () => {
-        // Clear users table and create test user
-        await db.query('TRUNCATE TABLE users CASCADE');
-        const hashedPassword = await bcryptjs.hash(testUser.password, 10);
-        await db.query('INSERT INTO users (username, password) VALUES ($1, $2)', [
-            testUser.username,
-            hashedPassword,
-        ]);
-    });
-
-    beforeEach(() => {
-        // Create new agent for session handling
-        agent = chai.request.agent(app);
-    });
-
-    afterEach(() => {
-        // Clear cookie after each test
-        agent.close();
-    });
-
-    after(async () => {
-        // Clean up database
-        await db.query('TRUNCATE TABLE users CASCADE');
-    });
 
     describe('GET /profile', () => {
+
         it('should return 401 if user is not authenticated', done => {
             chai
-                .request(app)
+                .request(server)
                 .get('/profile')
                 .end((err, res) => {
+                    console.log(res.body);
                     expect(res).to.have.status(401);
-                    expect(res.text).to.equal('Not authenticated');
+                    expect(res.body.message).to.equal('Not authenticated');
                     done();
                 });
         });
 
-        it('should return user profile when authenticated', async () => {
-            // First login to get session
-            await agent.post('/login').send(testUser);
+        it('should return user profile when authenticated', done => {
+            const agent = chai.request.agent(server); // Create persistent agent
 
-            // Then access profile
-            const res = await agent.get('/profile');
+            // First login
+            agent
+                .post('/login')
+                .send({
+                    username: 'user1',
+                    password: 'user123',
+                    email: 'user1@colorado.edu',
+                })
+                .end((err, res) => {
+                    expect(res).to.have.status(200);
 
-            expect(res).to.have.status(200);
-            expect(res.body).to.be.an('object');
-            expect(res.body).to.have.property('username', testUser.username);
+                    // Now access profile with same agent (cookies preserved)
+                    agent
+                        .get('/profile')
+                        .set('Accept', 'application/json')  // Request JSON instead of HTML
+                        .end((err, res) => {
+                            expect(res).to.have.status(200);
+                            console.log(res.body);
+                            expect(res.body).to.be.an('object');
+                            expect(res.body).to.have.property('username', 'user1');
+                            agent.close(); // Clean up
+                            done(); // Only call done() once at the end
+                        });
+                });
         });
     });
 });
