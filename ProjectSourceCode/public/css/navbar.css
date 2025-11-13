@@ -1,0 +1,9 @@
+.custom-navbar {
+    background-color: #CFB87C;
+    color: black;
+}
+
+.custom-navbar .nav-link {
+    color: black !important;
+    font-weight: 500;
+}
