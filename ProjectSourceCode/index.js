@@ -41,6 +41,11 @@ app.use(session({
   cookie: { secure: false } // set to true if using https
 }));
 
+app.use((req, res, next) => {
+  res.locals.user = req.session.user;
+  next();
+});
+
 // Mock user database with three user types
 // In production, this would be in a real database
 const users = [
@@ -101,6 +106,22 @@ app.engine('hbs', hbs.engine);
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, 'views'));
 
+//Navbar
+/*
+app.get("/navbar-test", (req, res) => {
+  res.render("partials/navbar");
+});
+*/
+
+app.get("/search", (req, res) => {
+  const query = req.query.q;
+
+  console.log("Search query:", query);
+
+  res.send("You searched for: " + query);
+});
+
+
 //routes
 //redirect to login
 app.get('/', (req, res) => {
@@ -121,27 +142,27 @@ app.get('/login', (req, res) => {
 //post login
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
-  
+
   // Find user
   const user = plainUsers.find(u => u.username === username);
-  
+
   if (!user) {
-    return res.render('pages/login', { 
-      layout: 'main', 
+    return res.render('pages/login', {
+      layout: 'main',
       error: 'Invalid username or password',
-      username 
+      username
     });
   }
-  
+
   // Check password (in production, use bcrypt.compare)
   if (password !== user.password) {
-    return res.render('pages/login', { 
-      layout: 'main', 
+    return res.render('pages/login', {
+      layout: 'main',
       error: 'Invalid username or password',
-      username 
+      username
     });
   }
-  
+
   // Create session
   req.session.user = {
     username: user.username,
@@ -150,7 +171,7 @@ app.post('/login', async (req, res) => {
     email: user.email,
     community: user.community
   };
-  
+
   res.redirect('/home');
 });
 
@@ -162,10 +183,11 @@ app.get('/logout', (req, res) => {
 
 //get home (protected route)
 app.get('/home', isAuthenticated, (req, res) => {
-  res.render('pages/home', { 
-    layout: 'main', 
+  res.render('pages/home', {
+    layout: 'main',
     title: 'Home',
-    user: req.session.user
+    user: req.session.user,
+    activeHome: true
   });
 });
 
