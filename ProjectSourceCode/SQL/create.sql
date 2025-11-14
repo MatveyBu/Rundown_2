@@ -16,7 +16,7 @@ CREATE TABLE users (
     password VARCHAR(100),
     email VARCHAR(100) UNIQUE NOT NULL,
     role VARCHAR(20) DEFAULT 'member' CHECK (role IN ('member','moderator','admin')),
-    profile_picture VARCHAR(100), --URL of a user's profile picture
+    profile_picture TEXT, --URL of a user's profile picture
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     college_id INT,
     bio VARCHAR(500),
