@@ -292,62 +292,94 @@ app.get('/home', isAuthenticated, (req, res) => {
 
 //get profile 
 app.get('/profile', isAuthenticated, async (req, res) => {
-
   try {
-    const userData = {
-      username: req.session.user.username,
-      email: req.session.user.email,
-      role: req.session.user.role,
-      profile_picture: req.session.user.profile_picture,
-      created_at: req.session.user.created_at,
-      college_id: req.session.user.college_id,
-      bio: req.session.user.bio
+    const row = await db.one(
+      `SELECT user_id, username, email, role, first_name, last_name,
+              profile_picture, created_at, college_id, bio
+       FROM users
+       WHERE user_id = $1`,
+      [req.session.user.user_id]
+    );
+
+    const user = {
+      ...row,
+      name: [row.first_name, row.last_name].filter(Boolean).join(' ') || row.username
     };
 
-    // Check if client wants JSON (test/API) or HTML (browser)
-    if (req.accepts('json') && !req.accepts('html')) {
-      return res.status(200).json(userData);
-    }
+    req.session.user = { ...req.session.user, ...user };
 
-    // Otherwise render the page
     return res.status(200).render('pages/profile', {
       layout: 'main',
       title: 'My Profile',
-      ...userData,
-      saved: true
+      user,
+      saved: !!req.query.saved
     });
-
   } catch (err) {
-    console.error('Profile error:', err);
-
-    // Return JSON error if client wants JSON
-    if (req.accepts('json') && !req.accepts('html')) {
-      return res.status(500).json({ error: 'Could not load profile' });
-    }
-
+    console.error('Profile GET error:', err);
     return res.status(500).render('pages/error', {
       layout: 'main',
       error: 'Could not load profile'
     });
   }
-
 });
+
+
 
 //post profile for bio and PFP
-app.post('/profile', isAuthenticated, (req, res) => {
+app.post('/profile', isAuthenticated, async (req, res) => {
   const { bio, avatar_url, profile_picture } = req.body;
+  const pic = (avatar_url || profile_picture || '').trim();
+  const bioText = (bio || '').trim();
 
-  req.session.user.bio = (bio || '').trim();
-  req.session.user.profile_picture = (avatar_url || profile_picture || '').trim();
+  try {
+    //had issues, debugging logs
+    const rowCount = await db.result(
+      `UPDATE users
+         SET bio = $1,
+             profile_picture = $2
+       WHERE user_id = $3`,
+      [bioText, pic, req.session.user.user_id],
+      r => r.rowCount
+    );
+    console.log('POST /profile updated rows:', rowCount);
 
-  // refresh page with saved message
-  res.render('pages/profile', {
-    layout: 'main',
-    title: 'My Profile',
-    user: req.session.user,
-    saved: true
-  });
+    if (rowCount !== 1) {
+      //wrong user id?
+      return res.status(400).render('pages/profile', {
+        layout: 'main',
+        title: 'My Profile',
+        user: req.session.user,
+        error: 'Could not save changes (no matching user).'
+      });
+    }
+
+    //reload page with updated info
+    const row = await db.one(
+      `SELECT user_id, username, email, role, first_name, last_name,
+              profile_picture, created_at, college_id, bio
+       FROM users
+       WHERE user_id = $1`,
+      [req.session.user.user_id]
+    );
+
+    req.session.user = {
+      ...row,
+      name: [row.first_name, row.last_name].filter(Boolean).join(' ') || row.username
+    };
+
+    //reditect with saved flag
+    return res.redirect('/profile?saved=1');
+  } catch (err) {
+    console.error('Profile update error:', err);
+    return res.status(500).render('pages/profile', {
+      layout: 'main',
+      title: 'My Profile',
+      user: req.session.user,
+      error: 'Could not save changes'
+    });
+  }
 });
+
 
 
 app.get('/welcome', (req, res) => {
