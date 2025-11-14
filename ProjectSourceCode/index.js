@@ -290,61 +290,47 @@ app.get('/home', isAuthenticated, (req, res) => {
   });
 });
 
-//get profile 
+//get profile
 app.get('/profile', isAuthenticated, async (req, res) => {
   try {
-    const row = await db.one(
-      `SELECT user_id, username, email, role, first_name, last_name,
-              profile_picture, created_at, college_id, bio
-       FROM users
-       WHERE user_id = $1`,
+    const user = await db.one(
+      'SELECT user_id, username, email, role, first_name, last_name, profile_picture, created_at, college_id, bio FROM users WHERE user_id = $1',
       [req.session.user.user_id]
     );
 
-    const user = {
-      ...row,
-      name: [row.first_name, row.last_name].filter(Boolean).join(' ') || row.username
-    };
+    //simple full name fallback
+    user.name = (user.first_name ? user.first_name : '') + (user.last_name ? (' ' + user.last_name) : '');
+    if (!user.name.trim()) user.name = user.username;
 
-    req.session.user = { ...req.session.user, ...user };
+    //keep session in sync
+    req.session.user = user;
 
-    return res.status(200).render('pages/profile', {
+    res.render('pages/profile', {
       layout: 'main',
       title: 'My Profile',
-      user,
+      user: user,
       saved: !!req.query.saved
     });
-  } catch (err) {
-    console.error('Profile GET error:', err);
-    return res.status(500).render('pages/error', {
-      layout: 'main',
-      error: 'Could not load profile'
-    });
+  } catch (e) {
+    console.log('GET /profile error:', e);
+    res.status(500).render('pages/error', { layout: 'main', error: 'Could not load profile' });
   }
 });
 
-
-
-//post profile for bio and PFP
+//post profile pfp+bio right now
 app.post('/profile', isAuthenticated, async (req, res) => {
-  const { bio, avatar_url, profile_picture } = req.body;
-  const pic = (avatar_url || profile_picture || '').trim();
-  const bioText = (bio || '').trim();
+  const bio = (req.body.bio || '').trim();
+  const pic = ((req.body.avatar_url || req.body.profile_picture) || '').trim();
 
   try {
-    //had issues, debugging logs
-    const rowCount = await db.result(
-      `UPDATE users
-         SET bio = $1,
-             profile_picture = $2
-       WHERE user_id = $3`,
-      [bioText, pic, req.session.user.user_id],
-      r => r.rowCount
+    //update row
+    const result = await db.result(
+      'UPDATE users SET bio = $1, profile_picture = $2 WHERE user_id = $3',
+      [bio, pic, req.session.user.user_id]
     );
-    console.log('POST /profile updated rows:', rowCount);
+    console.log('updated rows:', result.rowCount);
 
-    if (rowCount !== 1) {
-      //wrong user id?
+    if (result.rowCount !== 1) {
       return res.status(400).render('pages/profile', {
         layout: 'main',
         title: 'My Profile',
@@ -353,25 +339,22 @@ app.post('/profile', isAuthenticated, async (req, res) => {
       });
     }
 
-    //reload page with updated info
-    const row = await db.one(
-      `SELECT user_id, username, email, role, first_name, last_name,
-              profile_picture, created_at, college_id, bio
-       FROM users
-       WHERE user_id = $1`,
+    //reload fresh data for the session + page
+    const user = await db.one(
+      'SELECT user_id, username, email, role, first_name, last_name, profile_picture, created_at, college_id, bio FROM users WHERE user_id = $1',
       [req.session.user.user_id]
     );
 
-    req.session.user = {
-      ...row,
-      name: [row.first_name, row.last_name].filter(Boolean).join(' ') || row.username
-    };
+    user.name = (user.first_name ? user.first_name : '') + (user.last_name ? (' ' + user.last_name) : '');
+    if (!user.name.trim()) user.name = user.username;
 
-    //reditect with saved flag
-    return res.redirect('/profile?saved=1');
-  } catch (err) {
-    console.error('Profile update error:', err);
-    return res.status(500).render('pages/profile', {
+    req.session.user = user;
+
+    //dont want to resubmit on refresh, redirect
+    res.redirect('/profile?saved=1');
+  } catch (e) {
+    console.log('POST /profile error:', e);
+    res.status(500).render('pages/profile', {
       layout: 'main',
       title: 'My Profile',
       user: req.session.user,
@@ -379,6 +362,7 @@ app.post('/profile', isAuthenticated, async (req, res) => {
     });
   }
 });
+
 
 
 
