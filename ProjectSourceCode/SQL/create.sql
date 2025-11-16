@@ -1,34 +1,16 @@
 -- Main Tables
-CREATE TABLE colleges ( --users references this so it needs to get created first
-    college_id SERIAL PRIMARY KEY,
-    college_name VARCHAR(150) NOT NULL,
-    location VARCHAR(150),
-    domain VARCHAR(100),
-    logo VARCHAR(100), --URL of the college logo
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
 --Required for registration are username, email, and password
 CREATE TABLE users (
 	user_id SERIAL PRIMARY KEY,
     first_name VARCHAR(100),
     last_name VARCHAR(100),
     username VARCHAR(100) UNIQUE NOT NULL,
-    password VARCHAR(100),
+    password VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     role VARCHAR(20) DEFAULT 'member' CHECK (role IN ('member','moderator','admin')),
     profile_picture TEXT, --URL of a user's profile picture
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    college_id INT,
-    bio VARCHAR(500),
-    FOREIGN KEY (college_id) REFERENCES colleges(college_id) ON DELETE SET NULL
-);
-
-CREATE TABLE posts(
-	post_id SERIAL PRIMARY KEY,
-    text VARCHAR (500),
-    user_id INT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+    bio VARCHAR(500)
 );
 
 CREATE TABLE communities(
@@ -42,6 +24,15 @@ CREATE TABLE communities(
     FOREIGN KEY (created_by) REFERENCES users(user_id) ON DELETE SET NULL
 );
 
+CREATE TABLE posts(
+	post_id SERIAL PRIMARY KEY,
+    community_id INT NOT NULL,
+    text VARCHAR (500),
+    user_id INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (community_id) REFERENCES communities(community_id) ON DELETE CASCADE
+);
 
 -- Connection Tables
 CREATE TABLE users_communities(
@@ -70,18 +61,12 @@ CREATE TABLE verification_tokens(
 
 
 --Default Sample Data
---colleges data
-INSERT INTO colleges(college_name, location, domain)
-VALUES
-('University of Colorado Boulder','Boulder, CO','colorado.edu'),
-('University of Colorado Colorado Springs','Colorado Springs, CO','uccs.edu'),
-('Colorado State University','Fort Collins, CO','colostate.edu');
 --users data
-INSERT INTO users(first_name, last_name, username, password, email, role, college_id)
+INSERT INTO users(first_name, last_name, username, password, email, role)
 VALUES
-('Matvey','Bubalo', 'MatveyBu', 'hashed_pw1','matvey.bubalo@colorado.edu','admin',1),
-('Liam','Clinton','licl','hashed_pw2','liam.clinton@uccs.edu','member',2),
-('Sofia','Reed','soree','hashed_pw3','sofia.reed@colostate.edu','moderator',3);
+('Matvey','Bubalo', 'MatveyBu', 'hashed_pw1','matvey.bubalo@colorado.edu','admin'),
+('Liam','Clinton','licl','hashed_pw2','liam.clinton@uccs.edu','member'),
+('Sofia','Reed','soree','hashed_pw3','sofia.reed@colostate.edu','moderator');
 --community data
 INSERT INTO communities(name, description,community_type,created_by, number_of_members)
 VALUES
