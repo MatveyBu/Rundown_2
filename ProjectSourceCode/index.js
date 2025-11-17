@@ -37,6 +37,8 @@ db.connect()
 
     // Initialize default users after database connection is established
     await initializeUsers();
+    // Initialize default communities and user_community connections
+    await initializeSampleData();
   })
   .catch(error => {
     console.log('ERROR:', error.message || error);
@@ -63,8 +65,21 @@ app.use(session({
 // We'll hash them on startup
 const plainUsers = [
   { username: 'user1', password: 'user123', role: 'member', first_name: 'John', last_name: 'Doe', email: 'user1@colorado.edu' },
-  { username: 'moderator1', password: 'mod123', role: 'moderator', first_name: 'Jane', last_name: 'Smith', email: 'moderator1@colorado.edu', community: 'Housing' },
-  { username: 'admin1', password: 'admin123', role: 'admin', first_name: 'Admin', last_name: 'User', email: 'admin1@colorado.edu' }
+  { username: 'moderator1', password: 'mod123', role: 'moderator', first_name: 'Jane', last_name: 'Smith', email: 'moderator1@colorado.edu'},
+  { username: 'admin1', password: 'admin123', role: 'admin', first_name: 'Admin', last_name: 'User', email: 'admin1@colorado.edu' },
+  { username: 'MatveyBu', password: 'pass1', role: 'admin', first_name: 'Matvey', last_name: 'Bubalo', email: 'matvey.bubalo@colorado.edu'},
+  { username: 'licl', password:'pass2', role:'member', first_name: 'Liam', last_name: 'Clinton', email: 'liam.clinton@colorado.edu'},
+  { username: 'soree', password:'pass3', role:'member', first_name: 'Sofia', last_name: 'Reed', email}
+];
+
+const plainCommunities=[
+  {name: 'Gaming Club', description:'Community of students interested in video gaming', community_type:'social', created_by: 4, number_of_members: 1},
+  {name: 'Sustainability Club', description:'A place for students interested in sustainability to connect', community_type:'social', created_by: 5, number_of_members: 1},
+  {name: 'Homework Help', description:'Join a community striving for academic success through collaboration!', community_type:'academic', created_by: 6, number_of_members: 1}
+];
+
+const plainUsersCommunities = [
+  {user_id: 4, community_id: 1}
 ];
 
 // Initialize default users on startup
@@ -86,6 +101,30 @@ async function initializeUsers() {
     console.log('Default users initialized successfully');
   } catch (error) {
     console.error('Error initializing users:', error);
+  }
+}
+
+async function initializeSampleData(){
+  try{
+    console.log('Initializing sample data...')
+    for(const community of plainCommunities){
+      await db.none(
+        `INSERT INTO communities (name, description, community_type, create_by, number_of_members)
+        VALUES ($1,$2,$3,$4,$5)
+        ON CONFLICT (name) DO NOTHING`
+        [community.name, community.description, community.community_type, community.created_by, community.number_of_members]
+      );
+    }
+    for(const connection of plainUsersCommunities){
+      await db.none(
+        `INSERT INTO users_communities (user_id, community_id)
+        VALUES ($1,$2)`
+        [connection.user_id, connection.community_id]
+      )
+    }
+    console.log('Sample data initialized successfully');
+  } catch(error){
+    console.error('Error initializing sample data:', error);
   }
 }
 

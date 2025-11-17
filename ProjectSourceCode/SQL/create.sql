@@ -10,7 +10,8 @@ CREATE TABLE users (
     role VARCHAR(20) DEFAULT 'member' CHECK (role IN ('member','moderator','admin')),
     profile_picture TEXT, --URL of a user's profile picture
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    bio VARCHAR(500)
+    bio VARCHAR(500),
+    is_banned BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE communities(
@@ -61,13 +62,16 @@ CREATE TABLE verification_tokens(
 
 
 --Default Sample Data
---users data
+--The sample data will be uploaded through index.js due to the need to has passwords and the dependencies on users
+/*
 INSERT INTO users(first_name, last_name, username, password, email, role)
 VALUES
 ('Matvey','Bubalo', 'MatveyBu', 'hashed_pw1','matvey.bubalo@colorado.edu','admin'),
 ('Liam','Clinton','licl','hashed_pw2','liam.clinton@uccs.edu','member'),
 ('Sofia','Reed','soree','hashed_pw3','sofia.reed@colostate.edu','moderator');
+*/
 --community data
+/*
 INSERT INTO communities(name, description,community_type,created_by, number_of_members)
 VALUES
 ('Gaming Club','Community of students interested in video gaming', 'social', 1,1),
@@ -77,3 +81,4 @@ VALUES
 INSERT INTO users_communities(user_id, community_id)
 VALUES
 (1,1); --Matvey to the Gaming Club
+*/
