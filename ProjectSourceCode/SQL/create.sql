@@ -11,7 +11,7 @@ CREATE TABLE users (
     profile_picture TEXT, --URL of a user's profile picture
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     bio VARCHAR(500),
-    is_banned BOOLEAN DEFAULT FALSE
+    is_banned BOOLEAN DEFAULT FALSE --site-wide bans
 );
 
 CREATE TABLE communities(
@@ -50,6 +50,16 @@ CREATE TABLE post_likes(
     PRIMARY KEY (user_id, post_id),
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
     FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE
+);
+
+CREATE TABLE community_bans(
+    user_id INT NOT NULL,
+    community_id INT NOT NULL,
+    banned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    reason VARCHAR(500),
+    PRIMARY KEY (user_id, community_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (community_id) REFERENCES communities(community_id) ON DELETE CASCADE
 );
 
 CREATE TABLE verification_tokens(
