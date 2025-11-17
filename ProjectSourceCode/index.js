@@ -69,7 +69,7 @@ const plainUsers = [
   { username: 'admin1', password: 'admin123', role: 'admin', first_name: 'Admin', last_name: 'User', email: 'admin1@colorado.edu' },
   { username: 'MatveyBu', password: 'pass1', role: 'admin', first_name: 'Matvey', last_name: 'Bubalo', email: 'matvey.bubalo@colorado.edu'},
   { username: 'licl', password:'pass2', role:'member', first_name: 'Liam', last_name: 'Clinton', email: 'liam.clinton@colorado.edu'},
-  { username: 'soree', password:'pass3', role:'member', first_name: 'Sofia', last_name: 'Reed', email}
+  { username: 'soree', password:'pass3', role:'member', first_name: 'Sofia', last_name: 'Reed', email: 'sofia.reed@colorado.edu'}
 ];
 
 const plainCommunities=[
@@ -109,16 +109,16 @@ async function initializeSampleData(){
     console.log('Initializing sample data...')
     for(const community of plainCommunities){
       await db.none(
-        `INSERT INTO communities (name, description, community_type, create_by, number_of_members)
+        `INSERT INTO communities (name, description, community_type, created_by, number_of_members)
         VALUES ($1,$2,$3,$4,$5)
-        ON CONFLICT (name) DO NOTHING`
+        ON CONFLICT (name) DO NOTHING`,
         [community.name, community.description, community.community_type, community.created_by, community.number_of_members]
       );
     }
     for(const connection of plainUsersCommunities){
       await db.none(
         `INSERT INTO users_communities (user_id, community_id)
-        VALUES ($1,$2)`
+        VALUES ($1,$2)`,
         [connection.user_id, connection.community_id]
       )
     }
