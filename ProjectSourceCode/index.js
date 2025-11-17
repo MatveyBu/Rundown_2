@@ -79,7 +79,9 @@ const plainCommunities=[
 ];
 
 const plainUsersCommunities = [
-  {user_id: 4, community_id: 1}
+  {user_id: 4, community_id: 1},
+  {user_id: 6, community_id: 3},
+  {user_id: 5, community_id: 2}
 ];
 
 // Initialize default users on startup
