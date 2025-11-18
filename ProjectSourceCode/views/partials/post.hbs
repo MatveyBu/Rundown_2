@@ -1,0 +1,25 @@
+<div class="card mb-4 shadow-sm" style="width: 28rem;">
+    <div class="position-relative">
+        {{!-- Location overlay (optional) --}}
+        {{#if location}}
+        <span class="position-absolute top-0 start-0 bg-dark text-white px-2 py-1 m-2 rounded">
+            📍 {{location}}
+        </span>
+        {{/if}}
+
+        {{!-- Post image --}}
+        <img src="{{imageUrl}}" class="card-img-top" alt="Post image" style="object-fit: cover; height: 18rem;">
+    </div>
+
+    <div class="card-body">
+        {{!-- Optional caption --}}
+        {{#if caption}}
+        <p class="card-text">{{caption}}</p>
+        {{/if}}
+
+        {{!-- Author info (optional) --}}
+        {{#if author}}
+        <p class="text-muted mb-0"><small>Posted by {{author}}</small></p>
+        {{/if}}
+    </div>
+</div>
