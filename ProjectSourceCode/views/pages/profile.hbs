@@ -41,7 +41,6 @@
             {{#if saved}}<div class="alert alert-success">Changes have been saved.</div>{{/if}}
             {{#if error}}<div class="alert alert-danger">{{error}}</div>{{/if}}
 
-            <!--as of my push, does not affect DB -->
             <form action="/profile" method="POST" class="row g-3">
               <div class="col-12">
 
@@ -62,7 +61,37 @@
               </div>
             
             </form>
-
+            {{! adding section to change password}}
+            <hr class="my-4">
+            <div class="mb-3">
+              <button type="button" id="password-toggle" class="btn btn-outline-cu btn-sm">Change Password</button>
+              <div id="password-section" class="mt-3 d-none">
+                <form action="/profile/change-password" method="POST" class="row g-3">
+                  <div class="col-12">
+                    <label for="current_password" class="form-label">Current Password</label>
+                    <input id="current_password" name="current_password" type="password" class="form-control" required>
+                  </div>
+                  <div class="col-12">
+                    <label for="new_password" class="form-label">New Password</label>
+                    <input id="new_password" name="new_password" type="password" class="form-control" required>
+                  </div>
+                  <div class="col-12">
+                    <label for="confirm_password" class="form-label">Confirm New Password</label>
+                    <input id="confirm_password" name="confirm_password" type="password" class="form-control" required>
+                  </div>
+                  <div class="col-12">
+                    <button type="submit" class="btn btn-cu w-100">Update Password</button>
+                  </div>
+                </form>
+                {{! script for toggling password change section}}
+                <script>
+                  document.getElementById('password-toggle').addEventListener('click', function() {
+                    const passwordSection = document.getElementById('password-section');
+                    passwordSection.classList.toggle('d-none');
+                  });
+                </script>
+              </div>
+            </div>
           </div>
         </div>
         {{> footer}}

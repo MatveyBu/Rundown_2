@@ -404,7 +404,53 @@ app.post('/profile', isAuthenticated, async (req, res) => {
   }
 });
 
+//profile page change password route
+app.post('/profile/change-password', isAuthenticated, async (req, res) => {
+  const currentPassword = (req.body.current_password || '').trim();
+  const newPassword = (req.body.new_password || '').trim();
+  const confirmPassword = (req.body.confirm_password || '').trim();
 
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    return res.status(400).render('pages/profile', {
+      layout: 'main',
+      title: 'My Profile',
+      user: req.session.user,
+      error: 'Please fill in all password fields'
+    });
+  }
+  if (newPassword !== confirmPassword) {
+    return res.status(400).render('pages/profile', {
+      layout: 'main',
+      title: 'My Profile',
+      user: req.session.user,
+      error: 'New password and confirmation do not match'
+    });
+  } 
+
+  try {
+    const user = await db.one('SELECT password FROM users WHERE user_id = $1', [req.session.user.user_id]);
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).render('pages/profile', {
+        layout: 'main',
+        title: 'My Profile',
+        user: req.session.user,
+        error: 'Current password is incorrect'
+      });
+    }
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    await db.none('UPDATE users SET password = $1 WHERE user_id = $2', [hashedNewPassword, req.session.user.user_id]);
+    return res.redirect('/profile?saved=1');
+  } catch (e) {
+    console.log('POST /change-password error:', e);
+    return res.status(500).render('pages/profile', {
+      layout: 'main',
+      title: 'My Profile',
+      user: req.session.user,
+      error: 'An error occurred while changing the password'
+    });
+  }
+});
 
 
 app.get('/welcome', (req, res) => {
