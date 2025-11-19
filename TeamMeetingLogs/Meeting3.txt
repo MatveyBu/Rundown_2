@@ -1,0 +1,6 @@
+- Switched to have rundown just work for CU, we believed that we could focus more on key functions/aspects
+of the project if we limited ourselves to just CU
+- Each member went over their contributions to the project in the last week
+- Discussed plans for future features and full project goals
+- Each member went over what they are working on for the following week
+15 mins
