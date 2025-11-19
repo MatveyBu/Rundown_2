@@ -1,0 +1,68 @@
+:root {
+    --cu-buff: #CFB87C;
+    --cu-buff-2: #E0CC9B;
+    --cu-black: #000;
+}
+
+.community-wrap {
+    padding-top: 1rem;
+    padding-bottom: 4rem;
+    background:
+        radial-gradient(1200px 500px at 10% -10%, rgba(207, 184, 124, .18), transparent),
+        radial-gradient(900px 400px at 90% 0%, rgba(207, 184, 124, .12), transparent);
+    min-height: 100vh;
+}
+
+.community-card {
+    border: 1px solid rgba(0, 0, 0, .06);
+    border-radius: .8rem;
+    background: rgba(255, 255, 255, .92);
+}
+
+.btn-cu {
+    background-color: var(--cu-buff);
+    border-color: var(--cu-buff);
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.btn-cu:hover {
+    background-color: var(--cu-buff-2);
+    border-color: var(--cu-buff-2);
+    color: #111827;
+}
+
+.btn-outline-cu {
+    background: transparent;
+    border: 2px solid var(--cu-buff);
+    color: var(--cu-buff);
+    font-weight: 600;
+}
+
+.btn-outline-cu:hover {
+    background: var(--cu-buff);
+    color: #111827;
+}
+
+.pfp {
+    width: 75px;
+    height: 75px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--cu-buff);
+    background: #fff;
+}
+
+.pfp-fallback {
+    width: 75px;
+    height: 75px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--cu-buff);
+    color: #111;
+    font-weight: 700;
+    font-size: 1.1rem;
+    border: 2px solid var(--cu-buff);
+}

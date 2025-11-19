@@ -335,8 +335,10 @@ app.get('/profile', isAuthenticated, async (req, res) => {
     //keep session in sync
     req.session.user = user;
 
-    // Return JSON for API requests (tests), HTML for browser requests
-    if (req.accepts('json')) {
+    const acceptHeader = req.get('Accept') || '';
+    const wantsJson = acceptHeader.includes('application/json') && !acceptHeader.includes('text/html');
+
+    if (wantsJson) {
       return res.status(200).json(user);
     }
 
@@ -348,7 +350,10 @@ app.get('/profile', isAuthenticated, async (req, res) => {
     });
   } catch (e) {
     console.log('GET /profile error:', e);
-    if (req.accepts('json')) {
+    const acceptHeader = req.get('Accept') || '';
+    const wantsJson = acceptHeader.includes('application/json') && !acceptHeader.includes('text/html');
+
+    if (wantsJson) {
       return res.status(500).json({ error: 'Could not load profile' });
     }
     return res.status(500).render('pages/error', { layout: 'main', error: 'Could not load profile' });
@@ -445,6 +450,90 @@ app.post('/profile/change-password', isAuthenticated, async (req, res) => {
       title: 'My Profile',
       user: req.session.user,
       error: 'An error occurred while changing the password'
+    });
+  }
+});
+
+app.get('/community', isAuthenticated, async (req, res) => {
+  const communities = await db.any(
+    `SELECT c.*
+   FROM communities c
+   JOIN users_communities uc ON uc.community_id = c.community_id
+   WHERE uc.user_id = $1`,
+    [req.session.user.user_id]
+  );
+  if (communities.length === 0) {
+    return res.status(404).render('pages/community', {
+      layout: 'main',
+      title: 'Community',
+      user: req.session.user,
+      error: 'No communities found'
+    });
+  }
+  res.render('pages/community', {
+    layout: 'main',
+    title: 'Community',
+    user: req.session.user,
+    communities: communities
+  });
+});
+
+app.post('/community/save-description', isAuthenticated, async (req, res) => {
+  const description = (req.body.description || '').trim();
+  if (!description) {
+    return res.status(400).render('pages/community', {
+      layout: 'main',
+      title: 'Community',
+      community: req.session.community,
+      error: 'Please fill in some description'
+    });
+  }
+  try {
+    if (req.session.user.role === 'moderator') {
+      await db.none('UPDATE communities SET description = $1 WHERE community_id = $2', [description, req.session.user.community_id]);
+      return res.redirect('/community?saved=1');
+    } else {
+      return res.status(403).render('pages/community', {
+        layout: 'main',
+        title: 'Community',
+        community: req.session.community,
+        error: 'You are not authorized to save the description'
+      });
+    }
+  } catch (e) {
+    console.log('POST /save-description error:', e);
+    return res.status(500).render('pages/community', {
+      layout: 'main',
+      title: 'Community',
+      community: req.session.community,
+      error: 'An error occurred while saving the description'
+    });
+  }
+});
+
+//profile page change password route
+app.post('/community/create-post', isAuthenticated, async (req, res) => {
+  const postText = (req.body.post_text || '').trim();
+
+  if (!postText) {
+    return res.status(400).render('pages/community', {
+      layout: 'main',
+      title: 'Community',
+      user: req.session.user,
+      error: 'Please fill in some post text'
+    });
+  }
+
+  try {
+    await db.none('INSERT INTO posts (text, user_id, community_id) VALUES ($1, $2, $3)', [postText, req.session.user.user_id, req.session.user.community_id]);
+    return res.redirect('/community?saved=1');
+  } catch (e) {
+    console.log('POST /create-post error:', e);
+    return res.status(500).render('pages/community', {
+      layout: 'main',
+      title: 'Community',
+      community: req.session.community,
+      error: 'An error occurred while creating the post'
     });
   }
 });
