@@ -2,3 +2,4 @@
 - Went over each function/aspect of the project and which member should work on it.
 - Discussed and found solutions to problems that we encountered for the past week, like solving merge requests.
 - Moved items from ice box to to do.
+15 mins
