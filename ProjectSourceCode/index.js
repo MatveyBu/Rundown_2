@@ -65,23 +65,23 @@ app.use(session({
 // We'll hash them on startup
 const plainUsers = [
   { username: 'user1', password: 'user123', role: 'member', first_name: 'John', last_name: 'Doe', email: 'user1@colorado.edu' },
-  { username: 'moderator1', password: 'mod123', role: 'moderator', first_name: 'Jane', last_name: 'Smith', email: 'moderator1@colorado.edu'},
+  { username: 'moderator1', password: 'mod123', role: 'moderator', first_name: 'Jane', last_name: 'Smith', email: 'moderator1@colorado.edu' },
   { username: 'admin1', password: 'admin123', role: 'admin', first_name: 'Admin', last_name: 'User', email: 'admin1@colorado.edu' },
-  { username: 'MatveyBu', password: 'pass1', role: 'admin', first_name: 'Matvey', last_name: 'Bubalo', email: 'matvey.bubalo@colorado.edu'},
-  { username: 'licl', password:'pass2', role:'member', first_name: 'Liam', last_name: 'Clinton', email: 'liam.clinton@colorado.edu'},
-  { username: 'soree', password:'pass3', role:'member', first_name: 'Sofia', last_name: 'Reed', email: 'sofia.reed@colorado.edu'}
+  { username: 'MatveyBu', password: 'pass1', role: 'admin', first_name: 'Matvey', last_name: 'Bubalo', email: 'matvey.bubalo@colorado.edu' },
+  { username: 'licl', password: 'pass2', role: 'member', first_name: 'Liam', last_name: 'Clinton', email: 'liam.clinton@colorado.edu' },
+  { username: 'soree', password: 'pass3', role: 'member', first_name: 'Sofia', last_name: 'Reed', email: 'sofia.reed@colorado.edu' }
 ];
 
-const plainCommunities=[
-  {name: 'Gaming Club', description:'Community of students interested in video gaming', community_type:'social', created_by: 4, number_of_members: 1},
-  {name: 'Sustainability Club', description:'A place for students interested in sustainability to connect', community_type:'social', created_by: 5, number_of_members: 1},
-  {name: 'Homework Help', description:'Join a community striving for academic success through collaboration!', community_type:'academic', created_by: 6, number_of_members: 1}
+const plainCommunities = [
+  { name: 'Gaming Club', description: 'Community of students interested in video gaming', community_type: 'social', created_by: 4, number_of_members: 1 },
+  { name: 'Sustainability Club', description: 'A place for students interested in sustainability to connect', community_type: 'social', created_by: 5, number_of_members: 1 },
+  { name: 'Homework Help', description: 'Join a community striving for academic success through collaboration!', community_type: 'academic', created_by: 6, number_of_members: 1 }
 ];
 
 const plainUsersCommunities = [
-  {user_id: 4, community_id: 1},
-  {user_id: 6, community_id: 3},
-  {user_id: 5, community_id: 2}
+  { user_id: 4, community_id: 1 },
+  { user_id: 6, community_id: 3 },
+  { user_id: 5, community_id: 2 }
 ];
 
 // Initialize default users on startup
@@ -106,10 +106,10 @@ async function initializeUsers() {
   }
 }
 
-async function initializeSampleData(){
-  try{
+async function initializeSampleData() {
+  try {
     console.log('Initializing sample data...')
-    for(const community of plainCommunities){
+    for (const community of plainCommunities) {
       await db.none(
         `INSERT INTO communities (name, description, community_type, created_by, number_of_members)
         VALUES ($1,$2,$3,$4,$5)
@@ -117,15 +117,16 @@ async function initializeSampleData(){
         [community.name, community.description, community.community_type, community.created_by, community.number_of_members]
       );
     }
-    for(const connection of plainUsersCommunities){
+    for (const connection of plainUsersCommunities) {
       await db.none(
         `INSERT INTO users_communities (user_id, community_id)
-        VALUES ($1,$2)`,
+        VALUES ($1,$2)
+        ON CONFLICT (user_id, community_id) DO NOTHING`,
         [connection.user_id, connection.community_id]
       )
     }
     console.log('Sample data initialized successfully');
-  } catch(error){
+  } catch (error) {
     console.error('Error initializing sample data:', error);
   }
 }
@@ -289,31 +290,19 @@ app.post('/register', async (req, res) => {
     text: 'Please verify your email by clicking the link below: http://localhost:3000/verify-email?token=' + token
   };
 
-  try {
-    console.log("Sending email to:", email);
-    // Wrap sendMail in a Promise
-    await new Promise((resolve, reject) => {
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          reject(error);
-        } else {
-          console.log("Email sent successfully:", info.response);
-          resolve(info);
-        }
-      });
-    });
-    return res.status(200).send({ message: 'Email sent. Please check your email for verification.' });
-  } catch (error) {
-    console.error('Error sending email:', error);
-    console.error('Email error details:', error.message, error.code);
-    // Email failed, but user is already registered in verification_tokens
-    // For development, we can still return success, but log the error
-    // In production, you might want to handle this differently
-    return res.status(200).send({
-      message: 'Email sent. Please check your email for verification.',
-      warning: 'Email service may be temporarily unavailable'
-    });
-  }
+  // Send email asynchronously without blocking the response
+  console.log("Sending email to:", email);
+  transporter.sendMail(mailOptions, (error, info) => { //no Promise wrapper needed here because can be asycn and would time out the testcase
+    if (error) {
+      console.error('Error sending email:', error);
+      console.error('Email error details:', error.message, error.code);
+    } else {
+      console.log("Email sent successfully:", info.response);
+    }
+  });
+
+  // Return response immediately without waiting for email
+  return res.status(200).send({ message: 'Email sent. Please check your email for verification.' });
 });
 
 //logout
@@ -335,7 +324,7 @@ app.get('/home', isAuthenticated, (req, res) => {
 app.get('/profile', isAuthenticated, async (req, res) => {
   try {
     const user = await db.one(
-      'SELECT user_id, username, email, role, first_name, last_name, profile_picture, created_at, college_id, bio FROM users WHERE user_id = $1',
+      'SELECT * FROM users WHERE user_id = $1',
       [req.session.user.user_id]
     );
 
@@ -346,6 +335,11 @@ app.get('/profile', isAuthenticated, async (req, res) => {
     //keep session in sync
     req.session.user = user;
 
+    // Return JSON for API requests (tests), HTML for browser requests
+    if (req.accepts('json')) {
+      return res.status(200).json(user);
+    }
+
     res.render('pages/profile', {
       layout: 'main',
       title: 'My Profile',
@@ -354,7 +348,10 @@ app.get('/profile', isAuthenticated, async (req, res) => {
     });
   } catch (e) {
     console.log('GET /profile error:', e);
-    res.status(500).render('pages/error', { layout: 'main', error: 'Could not load profile' });
+    if (req.accepts('json')) {
+      return res.status(500).json({ error: 'Could not load profile' });
+    }
+    return res.status(500).render('pages/error', { layout: 'main', error: 'Could not load profile' });
   }
 });
 
@@ -425,7 +422,7 @@ app.post('/profile/change-password', isAuthenticated, async (req, res) => {
       user: req.session.user,
       error: 'New password and confirmation do not match'
     });
-  } 
+  }
 
   try {
     const user = await db.one('SELECT password FROM users WHERE user_id = $1', [req.session.user.user_id]);
