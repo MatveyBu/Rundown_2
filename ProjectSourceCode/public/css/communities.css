@@ -2,6 +2,7 @@
     --cu-buff: #CFB87C;
     --cu-buff-2: #E0CC9B;
     --cu-black: #000;
+    --cu-error: #F54927;
 }
 
 .community-wrap {
@@ -42,6 +43,32 @@
 .btn-outline-cu:hover {
     background: var(--cu-buff);
     color: #111827;
+}
+
+.btn-error {
+    background-color: var(--cu-error);
+    border-color: var(--cu-error);
+    color: #F54927;
+    font-weight: 600;
+}
+
+.btn-error:hover {
+    background-color: var(--cu-error);
+    border-color: var(--cu-error);
+    color: #111;
+}
+
+.btn-outline-error {
+    background: transparent !important;
+    border: 2px solid var(--cu-error) !important;
+    color: var(--cu-error) !important;
+    font-weight: 600;
+}
+
+.btn-outline-error:hover {
+    background-color: var(--cu-error) !important;
+    border-color: var(--cu-error) !important;
+    color: #111 !important;
 }
 
 .pfp {
