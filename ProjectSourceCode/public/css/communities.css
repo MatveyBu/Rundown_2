@@ -66,3 +66,33 @@
     font-size: 1.1rem;
     border: 2px solid var(--cu-buff);
 }
+
+.add-community-btn {
+    margin-left: 80px;
+}
+
+/* Replace green Confirm button with CU gold */
+.btn-success {
+    background-color: var(--cu-buff) !important;
+    border-color: var(--cu-buff) !important;
+    color: #1f2937 !important;
+    font-weight: 600;
+}
+
+.btn-success:hover {
+    background-color: var(--cu-buff-2) !important;
+    border-color: var(--cu-buff-2) !important;
+    color: #111827 !important;
+}
+
+.btn-cancel-cu {
+    background-color: #4b5563;   /* Slate / CU-like charcoal */
+    color: #ffffff;
+    font-weight: 600;
+    border: none;
+}
+
+.btn-cancel-cu:hover {
+    background-color: #374151;   /* Slightly darker */
+    color: #ffffff;
+}
