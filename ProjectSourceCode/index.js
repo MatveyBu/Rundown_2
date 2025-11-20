@@ -390,41 +390,57 @@ app.get('/register', (req, res) => {
 });
 
 app.post('/register', async (req, res) => {
-  const { email, username, password } = req.body;
-  console.log(email, username, password);
-  const token = crypto.randomBytes(32).toString('hex');
-  const user = await db.oneOrNone('SELECT * FROM users WHERE username = $1', [username])
-  if (user != undefined && user.length > 0) {
-    return res.status(400).send({ error: 'Username already exists. Please try again.' });
-  }
-  console.log("After username check");
-  const emailUser = await db.oneOrNone('SELECT * FROM users WHERE email = $1', [email])
-  if (emailUser != undefined && emailUser.length > 0) {
-    return res.status(400).send({ error: 'Email already exists. Please try again.' });
-  }
-  console.log("After validation checks");
-  const hash = await bcrypt.hash(password, 10);
-  await db.none('INSERT INTO verification_tokens (email, token, username, password) VALUES ($1, $2, $3, $4)', [email, token, username, hash]);
+  try {
 
-  const mailOptions = {
-    from: 'dhilonprasad@gmail.com',
-    to: email,
-    subject: 'Verification Email',
-    text: 'Please verify your email by clicking the link below: http://localhost:3000/verify-email?token=' + token
-  };
-
-  // Send email asynchronously without blocking the response
-  console.log("Sending email to:", email);
-  transporter.sendMail(mailOptions, (error, info) => { //no Promise wrapper needed here because can be asycn and would time out the testcase
-    if (error) {
-      console.error('Error sending email:', error);
-      console.error('Email error details:', error.message, error.code);
-    } else {
-      console.log("Email sent successfully:", info.response);
+    const { email, username, password } = req.body;
+    console.log(email, username, password);
+    
+    // Validate input
+    if (!email || !username || !password) {
+      return res.status(400).json({ error: 'All fields are required' });
     }
-  });
+    
+    const token = crypto.randomBytes(32).toString('hex');
+    
+    const user = await db.oneOrNone('SELECT * FROM users WHERE username = $1', [username]);
+    if (user) {
+      return res.status(400).json({ error: 'Username already exists. Please try again.' });
+    }
+    
+    console.log("After username check");
+    const emailUser = await db.oneOrNone('SELECT * FROM users WHERE email = $1', [email]);
+    if (emailUser) {
+      return res.status(400).json({ error: 'Email already exists. Please try again.' });
+    }
+    
+    console.log("After validation checks");
+    const hash = await bcrypt.hash(password, 10);
+    await db.none('INSERT INTO verification_tokens (email, token, username, password) VALUES ($1, $2, $3, $4)', [email, token, username, hash]);
 
-  return res.status(200).send({ message: 'Email sent. Please check your email for verification.' });
+    const mailOptions = {
+      from: 'dhilonprasad@gmail.com',
+      to: email,
+      subject: 'Verification Email',
+      text: 'Please verify your email by clicking the link below: http://localhost:3000/verify-email?token=' + token
+    };
+
+    // Send email asynchronously without blocking the response
+    console.log("Sending email to:", email);
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error('Error sending email:', error);
+        console.error('Email error details:', error.message, error.code);
+      } else {
+        console.log("Email sent successfully:", info.response);
+      }
+    });
+
+
+    return res.render('pages/register', { message: 'Email sent. Please check your email for verification.' });
+  } catch (error) {
+    console.error('Register error:', error);
+    return res.status(500).json({ error: 'An error occurred during registration' });
+  }
 });
 
 //logout
