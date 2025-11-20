@@ -78,11 +78,26 @@ const plainCommunities = [
   { name: 'Homework Help', description: 'Join a community striving for academic success through collaboration!', community_type: 'academic', created_by: 6, number_of_members: 1 }
 ];
 
+const plainPosts = [
+  { text: 'I love playing video games!', user_id: 4, community_id: 1 },
+  { text: 'I love sustainability!', user_id: 5, community_id: 2 },
+  { text: 'I need help with my homework!', user_id: 6, community_id: 3 }
+];
+
 const plainUsersCommunities = [
   { user_id: 4, community_id: 1 },
+  { user_id: 4, community_id: 2 },
+  { user_id: 4, community_id: 3 },
   { user_id: 6, community_id: 3 },
   { user_id: 5, community_id: 2 }
 ];
+
+const plainPostLikes = [
+  { user_id: 4, post_id: 1 },
+  { user_id: 5, post_id: 2 },
+  { user_id: 6, post_id: 3 }
+];
+
 
 // Initialize default users on startup
 async function initializeUsers() {
@@ -125,6 +140,39 @@ async function initializeSampleData() {
         [connection.user_id, connection.community_id]
       )
     }
+    // Insert posts and get their actual IDs
+    const insertedPostIds = [];
+    for (const post of plainPosts) {
+      try {
+        // Try to insert the post and get its ID
+        const result = await db.one(
+          `INSERT INTO posts (text, user_id, community_id) VALUES ($1, $2, $3) RETURNING post_id`,
+          [post.text, post.user_id, post.community_id]
+        );
+        insertedPostIds.push(result.post_id);
+      } catch (error) {
+        // Post might already exist, try to find it
+        try {
+          const existingPost = await db.oneOrNone(
+            `SELECT post_id FROM posts WHERE text = $1 AND user_id = $2 AND community_id = $3 LIMIT 1`,
+            [post.text, post.user_id, post.community_id]
+          );
+          if (existingPost) {
+            insertedPostIds.push(existingPost.post_id);
+          }
+        } catch (lookupError) {
+          console.log('Could not find existing post:', post.text);
+        }
+      }
+    }
+
+    // Insert post likes using the actual post IDs
+    for (let i = 0; i < plainPostLikes.length && i < insertedPostIds.length; i++) {
+      await db.none(
+        `INSERT INTO post_likes (user_id, post_id) VALUES ($1, $2) ON CONFLICT (user_id, post_id) DO NOTHING`,
+        [plainPostLikes[i].user_id, insertedPostIds[i]]
+      );
+    }
     console.log('Sample data initialized successfully');
   } catch (error) {
     console.error('Error initializing sample data:', error);
@@ -136,8 +184,17 @@ const isAuthenticated = (req, res, next) => {
   if (req.session.user) {
     next();
   } else {
-    res.status(401).send({ message: 'Not authenticated' });
-    return;
+    // Check if it's an API/test request (wants JSON)
+    const acceptHeader = req.get('Accept') || '';
+    const wantsJson = acceptHeader.includes('application/json') && !acceptHeader.includes('text/html');
+
+    if (wantsJson) {
+      // Return error for test/API requests
+      return res.status(401).send({ message: 'Not authenticated' });
+    } else {
+      // Redirect to login for browser requests
+      return res.redirect('/login');
+    }
   }
 };
 
@@ -150,6 +207,41 @@ const hbs = handlebars.create({
     substring: (str, start, end) => {
       if (!str) return '';
       return str.substring(start, end);
+    },
+    formatDate: (date) => {
+      if (!date) return '';
+
+      // Handle date - could be Date object or string from PostgreSQL
+      let d;
+      if (date instanceof Date) {
+        d = date;
+      } else {
+        // PostgreSQL TIMESTAMP - if no timezone, pg-promise may return as UTC
+        // Ensure we parse it correctly
+        const dateStr = date.toString();
+        // If it's already a proper ISO string with timezone, use it
+        // Otherwise, if it looks like ISO without timezone, treat as UTC
+        if (dateStr.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/) && !dateStr.includes('Z') && !dateStr.match(/[+-]\d{2}:\d{2}$/)) {
+          d = new Date(dateStr + 'Z'); // Append Z to treat as UTC
+        } else {
+          d = new Date(dateStr);
+        }
+      }
+
+      // Convert to local timezone and format
+      return d.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+    },
+    eq: (a, b) => {
+      // Access user from template context via options.data.root
+      // This works even inside {{#each}} loops
+      return a === b;
     }
   }
 });
@@ -307,6 +399,7 @@ app.post('/register', async (req, res) => {
 
 //logout
 app.get('/logout', (req, res) => {
+  console.log('Logged out user:', req.session.user.username);
   req.session.destroy();
   res.redirect('/login');
 });
@@ -454,7 +547,7 @@ app.post('/profile/change-password', isAuthenticated, async (req, res) => {
   }
 });
 
-app.get('/community', isAuthenticated, async (req, res) => {
+app.get('/communities', isAuthenticated, async (req, res) => {
   const communities = await db.any(
     `SELECT c.*
    FROM communities c
@@ -463,76 +556,85 @@ app.get('/community', isAuthenticated, async (req, res) => {
     [req.session.user.user_id]
   );
   if (communities.length === 0) {
-    return res.status(404).render('pages/community', {
+    return res.status(404).render('pages/communities', {
       layout: 'main',
-      title: 'Community',
+      title: 'Communities',
       user: req.session.user,
       error: 'No communities found'
     });
   }
-  res.render('pages/community', {
+  res.render('pages/communities', {
     layout: 'main',
-    title: 'Community',
+    title: 'Communities',
     user: req.session.user,
     communities: communities
   });
 });
 
-app.post('/community/save-description', isAuthenticated, async (req, res) => {
+app.get('/communities/:community_id', isAuthenticated, async (req, res) => {
+  const community = await db.one(
+    `SELECT * FROM communities WHERE community_id = $1`,
+    [req.params.community_id]
+  );
+  res.render('pages/community', {
+    layout: 'main',
+    title: 'Community',
+    community: community,
+    user: req.session.user
+  });
+});
+
+app.post('/communities/save-description', isAuthenticated, async (req, res) => {
   const description = (req.body.description || '').trim();
   if (!description) {
-    return res.status(400).render('pages/community', {
+    return res.status(400).render('pages/communities', {
       layout: 'main',
-      title: 'Community',
-      community: req.session.community,
+      title: 'Communities',
+      communities: req.session.communities,
+      user: req.session.user,
       error: 'Please fill in some description'
     });
   }
   try {
-    if (req.session.user.role === 'moderator') {
-      await db.none('UPDATE communities SET description = $1 WHERE community_id = $2', [description, req.session.user.community_id]);
-      return res.redirect('/community?saved=1');
-    } else {
-      return res.status(403).render('pages/community', {
-        layout: 'main',
-        title: 'Community',
-        community: req.session.community,
-        error: 'You are not authorized to save the description'
-      });
-    }
+    await db.none('UPDATE communities SET description = $1 WHERE community_id = $2', [description, req.session.user.community_id]);
+    return res.redirect('/communities?saved=1');
   } catch (e) {
     console.log('POST /save-description error:', e);
-    return res.status(500).render('pages/community', {
+    return res.status(500).render('pages/communities', {
       layout: 'main',
-      title: 'Community',
-      community: req.session.community,
+      title: 'Communities',
+      communities: req.session.communities,
+      user: req.session.user,
       error: 'An error occurred while saving the description'
     });
   }
 });
 
 //profile page change password route
-app.post('/community/create-post', isAuthenticated, async (req, res) => {
+app.post('/communities/create-post', isAuthenticated, async (req, res) => {
   const postText = (req.body.post_text || '').trim();
+  const communityId = (req.body.community_id || '').trim();
 
   if (!postText) {
-    return res.status(400).render('pages/community', {
+    return res.status(400).render('pages/communities', {
       layout: 'main',
-      title: 'Community',
+      title: 'Communities',
+      communities: req.session.communities,
       user: req.session.user,
       error: 'Please fill in some post text'
     });
   }
 
   try {
-    await db.none('INSERT INTO posts (text, user_id, community_id) VALUES ($1, $2, $3)', [postText, req.session.user.user_id, req.session.user.community_id]);
-    return res.redirect('/community?saved=1');
+    await db.none('INSERT INTO posts (text, user_id, community_id) VALUES ($1, $2, $3)', [postText, req.session.user.user_id, communityId]);
+    return res.redirect('/communities?saved=1');
   } catch (e) {
     console.log('POST /create-post error:', e);
-    return res.status(500).render('pages/community', {
+    return res.status(500).render('pages/communities', {
       layout: 'main',
-      title: 'Community',
-      community: req.session.community,
+      title: 'Communities',
+      communities: req.session.communities,
+      user: req.session.user,
       error: 'An error occurred while creating the post'
     });
   }

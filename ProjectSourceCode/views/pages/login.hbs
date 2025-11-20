@@ -11,13 +11,9 @@
           <div class="card-body p-4 p-md-5">
             <div class="text-center mb-3">
               {{! CU logo and headings}}
-              <img
-                class="cu-logo mb-3"
+              <img class="cu-logo mb-3"
                 src="https://upload.wikimedia.org/wikipedia/en/thumb/d/d3/Colorado_Buffaloes_logo.svg/1200px-Colorado_Buffaloes_logo.svg.png"
-                alt="CU Boulder Logo"
-                width="72" height="72"
-                referrerpolicy="no-referrer"
-              />
+                alt="CU Boulder Logo" width="72" height="72" referrerpolicy="no-referrer" />
               <h1 class="h4 mb-1 fw-semibold">Rundown</h1>
               <p class="text-secondary mb-4">University of Colorado Boulder</p>
             </div>
@@ -30,30 +26,15 @@
             {{! Login form with validation}}
             <form action="/login" method="POST" class="needs-validation" novalidate>
               <div class="form-floating mb-3">
-                <input
-                  type="text"
-                  class="form-control"
-                  id="username"
-                  name="username"
-                  placeholder="Username"
-                  value="{{username}}"
-                  required
-                  autocomplete="username"
-                />
+                <input type="text" class="form-control" id="username" name="username" placeholder="Username"
+                  value="{{username}}" required autocomplete="username" />
                 <label for="username">Username</label>
                 <div class="invalid-feedback">Please enter your username.</div>
               </div>
 
               <div class="form-floating mb-3 position-relative">
-                <input
-                  type="password"
-                  class="form-control"
-                  id="password"
-                  name="password"
-                  placeholder="Password"
-                  required
-                  autocomplete="current-password"
-                />
+                <input type="password" class="form-control" id="password" name="password" placeholder="Password"
+                  required autocomplete="current-password" />
                 <label for="password">Password</label>
                 {{! Password show/hide toggle button}}
                 <button class="btn btn-link p-0 auth-toggle" type="button" id="togglePw">Show</button>
@@ -69,34 +50,32 @@
             </form>
           </div>
         </div>
-
-        {{> footer}}
       </div>
     </div>
   </div>
 </section>
 
 <script>
-//bootstrap form validation requiring inputs before submission
-(() => {
-  const form = document.querySelector('.needs-validation');
-  if (!form) return;
-  form.addEventListener('submit', (e) => {
-    if (!form.checkValidity()) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    form.classList.add('was-validated');
-  });
-})();
+  //bootstrap form validation requiring inputs before submission
+  (() => {
+    const form = document.querySelector('.needs-validation');
+    if (!form) return;
+    form.addEventListener('submit', (e) => {
+      if (!form.checkValidity()) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      form.classList.add('was-validated');
+    });
+  })();
 
-//password show/hide toggle
-//from bootstrap docs on custom styles
-document.getElementById('togglePw')?.addEventListener('click', () => {
-  const pw = document.getElementById('password');
-  const btn = document.getElementById('togglePw');
-  const hidden = pw.type === 'password';
-  pw.type = hidden ? 'text' : 'password';
-  btn.textContent = hidden ? 'Hide' : 'Show';
-});
+  //password show/hide toggle
+  //from bootstrap docs on custom styles
+  document.getElementById('togglePw')?.addEventListener('click', () => {
+    const pw = document.getElementById('password');
+    const btn = document.getElementById('togglePw');
+    const hidden = pw.type === 'password';
+    pw.type = hidden ? 'text' : 'password';
+    btn.textContent = hidden ? 'Hide' : 'Show';
+  });
 </script>
