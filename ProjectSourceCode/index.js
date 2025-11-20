@@ -247,15 +247,15 @@ app.post('/login', async (req, res) => {
 
 app.get('/verify-email', async (req, res) => {
   const { token } = req.query;
-  const verificationToken = await db.one('SELECT * FROM verification_tokens WHERE token = $1', [token]);
+  const verificationToken = await db.oneOrNone('SELECT * FROM verification_tokens WHERE token = $1', [token]);
   if (!verificationToken) {
     return res.render('pages/verify-email', {
       layout: 'main',
       error: 'Invalid token'
     });
   }
-  await db.one('INSERT INTO users (email, password, username) VALUES ($1, $2, $3)', [verificationToken.email, verificationToken.password, verificationToken.username]);
-  const user = await db.none('SELECT * FROM users WHERE username = $1', [verificationToken.username]);
+  await db.none('INSERT INTO users (email, password, username) VALUES ($1, $2, $3)', [verificationToken.email, verificationToken.password, verificationToken.username]);
+  const user = await db.one('SELECT * FROM users WHERE username = $1', [verificationToken.username]);
   req.session.user = {
     username: user.username,
     role: 'user',
@@ -266,17 +266,21 @@ app.get('/verify-email', async (req, res) => {
   return res.redirect('/home');
 });
 // Register
+app.get('/register', (req, res) => {
+  res.render('pages/register', { layout: 'main' });
+});
+
 app.post('/register', async (req, res) => {
   const { email, username, password } = req.body;
   console.log(email, username, password);
   const token = crypto.randomBytes(32).toString('hex');
-  const user = await db.any('SELECT * FROM users WHERE username = $1', [username])
-  if (user.length > 0) {
+  const user = await db.oneOrNone('SELECT * FROM users WHERE username = $1', [username])
+  if (user != undefined && user.length > 0) {
     return res.status(400).send({ error: 'Username already exists. Please try again.' });
   }
   console.log("After username check");
-  const emailUser = await db.any('SELECT * FROM users WHERE email = $1', [email])
-  if (emailUser.length > 0) {
+  const emailUser = await db.oneOrNone('SELECT * FROM users WHERE email = $1', [email])
+  if (emailUser != undefined && emailUser.length > 0) {
     return res.status(400).send({ error: 'Email already exists. Please try again.' });
   }
   console.log("After validation checks");
@@ -301,7 +305,6 @@ app.post('/register', async (req, res) => {
     }
   });
 
-  // Return response immediately without waiting for email
   return res.status(200).send({ message: 'Email sent. Please check your email for verification.' });
 });
 
