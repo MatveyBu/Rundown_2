@@ -316,8 +316,8 @@ app.post('/register', async (req, res) => {
       }
     });
 
-    // Return JSON response immediately
-    return res.status(200).json({ message: 'Email sent. Please check your email for verification.' });
+
+    return res.render('pages/register', { message: 'Email sent. Please check your email for verification.' });
   } catch (error) {
     console.error('Register error:', error);
     return res.status(500).json({ error: 'An error occurred during registration' });
