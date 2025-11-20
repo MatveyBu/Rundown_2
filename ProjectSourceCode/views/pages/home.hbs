@@ -4,25 +4,23 @@
     <div class="container">
       <div class="profile-nav">
         <div class="profile-logo">
-          <img 
-            src="https://upload.wikimedia.org/wikipedia/en/thumb/d/d3/Colorado_Buffaloes_logo.svg/1200px-Colorado_Buffaloes_logo.svg.png" 
-            alt="CU Boulder" 
-            height="40"
-          />
+          <img
+            src="https://upload.wikimedia.org/wikipedia/en/thumb/d/d3/Colorado_Buffaloes_logo.svg/1200px-Colorado_Buffaloes_logo.svg.png"
+            alt="CU Boulder" height="40" />
           <span>Rundown</span>
         </div>
         <div class="profile-user">
           <div class="user-info">
             <div class="user-avatar">
               {{#if user.profile_picture}}
-                <img src="{{user.profile_picture}}" alt="PFP"
-                    class="rounded-circle" width="36" height="36" style="object-fit:cover;">
+              <img src="{{user.profile_picture}}" alt="PFP" class="rounded-circle" width="36" height="36"
+                style="object-fit:cover;">
               {{else}}
-                {{#if user.name}}
-                  {{substring user.name 0 1}}
-                {{else}}
-                  U
-                {{/if}}
+              {{#if user.name}}
+              {{substring user.name 0 1}}
+              {{else}}
+              U
+              {{/if}}
               {{/if}}
             </div>
 
@@ -41,12 +39,9 @@
   <section class="hero-section">
     <div class="container">
       <div class="hero-content">
-        <img
-          class="hero-logo"
+        <img class="hero-logo"
           src="https://upload.wikimedia.org/wikipedia/en/thumb/d/d3/Colorado_Buffaloes_logo.svg/1200px-Colorado_Buffaloes_logo.svg.png"
-          alt="CU Boulder Logo"
-          referrerpolicy="no-referrer"
-        />
+          alt="CU Boulder Logo" referrerpolicy="no-referrer" />
         <h1 class="hero-title">Welcome to Rundown</h1>
         <p class="hero-subtitle">Connect with your CU Boulder community</p>
         <p class="hero-description">
@@ -65,22 +60,22 @@
     <div class="container">
       <h2 class="section-title">Quick Access</h2>
       <div class="quick-links-grid">
-        <a href="/housing" class="quick-link-card">
+        <a href="/communities/1" class="quick-link-card">
           <div class="card-icon">🏠</div>
           <h3>Housing</h3>
           <p>Find subleases and roommates</p>
         </a>
-        <a href="/lost-found" class="quick-link-card">
+        <a href="/communities/2" class="quick-link-card">
           <div class="card-icon">🆔</div>
           <h3>Lost & Found</h3>
           <p>Lost student ID cards</p>
         </a>
-        <a href="/clubs" class="quick-link-card">
+        <a href="/communities/3" class="quick-link-card">
           <div class="card-icon">🎯</div>
           <h3>Clubs & Sports</h3>
           <p>Join campus organizations</p>
         </a>
-        <a href="/classes" class="quick-link-card">
+        <a href="/communities/4" class="quick-link-card">
           <div class="card-icon">📚</div>
           <h3>Classes</h3>
           <p>Connect with classmates</p>

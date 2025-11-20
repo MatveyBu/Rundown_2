@@ -73,23 +73,39 @@ const plainUsers = [
 ];
 
 const plainCommunities = [
+  { name: 'Housing', description: 'Community of students interested in housing', community_type: 'social', created_by: 4, number_of_members: 1 }, //make sure when people register, everyone is added to housing and lost & found communities and clubs & sports communities and classes communities
+  { name: 'Lost & Found', description: 'Community of students interested in lost & found', community_type: 'social', created_by: 4, number_of_members: 1 },
+  { name: 'Clubs & Sports', description: 'Community of students interested in clubs & sports', community_type: 'social', created_by: 4, number_of_members: 1 },
+  { name: 'Classes', description: 'Community of students interested in classes', community_type: 'academic', created_by: 4, number_of_members: 1 },
   { name: 'Gaming Club', description: 'Community of students interested in video gaming', community_type: 'social', created_by: 4, number_of_members: 1 },
   { name: 'Sustainability Club', description: 'A place for students interested in sustainability to connect', community_type: 'social', created_by: 5, number_of_members: 1 },
   { name: 'Homework Help', description: 'Join a community striving for academic success through collaboration!', community_type: 'academic', created_by: 6, number_of_members: 1 }
 ];
 
 const plainPosts = [
-  { text: 'I love playing video games!', user_id: 4, community_id: 1 },
-  { text: 'I love sustainability!', user_id: 5, community_id: 2 },
-  { text: 'I need help with my homework!', user_id: 6, community_id: 3 }
+  { text: 'I love playing video games!', user_id: 4, community_id: 5 },
+  { text: 'I love sustainability!', user_id: 5, community_id: 6 },
+  { text: 'I need help with my homework!', user_id: 6, community_id: 7 }
 ];
 
 const plainUsersCommunities = [
   { user_id: 4, community_id: 1 },
   { user_id: 4, community_id: 2 },
   { user_id: 4, community_id: 3 },
+  { user_id: 4, community_id: 4 },
+  { user_id: 5, community_id: 1 },
+  { user_id: 5, community_id: 2 },
+  { user_id: 5, community_id: 3 },
+  { user_id: 5, community_id: 4 },
+  { user_id: 6, community_id: 1 },
+  { user_id: 6, community_id: 2 },
   { user_id: 6, community_id: 3 },
-  { user_id: 5, community_id: 2 }
+  { user_id: 6, community_id: 4 },
+  { user_id: 4, community_id: 5 },
+  { user_id: 4, community_id: 6 },
+  { user_id: 4, community_id: 7 },
+  { user_id: 6, community_id: 7 },
+  { user_id: 5, community_id: 6 }
 ];
 
 const plainPostLikes = [
@@ -143,35 +159,40 @@ async function initializeSampleData() {
     // Insert posts and get their actual IDs
     const insertedPostIds = [];
     for (const post of plainPosts) {
-      try {
-        // Try to insert the post and get its ID
-        const result = await db.one(
-          `INSERT INTO posts (text, user_id, community_id) VALUES ($1, $2, $3) RETURNING post_id`,
-          [post.text, post.user_id, post.community_id]
-        );
-        insertedPostIds.push(result.post_id);
-      } catch (error) {
-        // Post might already exist, try to find it
-        try {
-          const existingPost = await db.oneOrNone(
-            `SELECT post_id FROM posts WHERE text = $1 AND user_id = $2 AND community_id = $3 LIMIT 1`,
-            [post.text, post.user_id, post.community_id]
-          );
-          if (existingPost) {
-            insertedPostIds.push(existingPost.post_id);
-          }
-        } catch (lookupError) {
-          console.log('Could not find existing post:', post.text);
-        }
+      // Check if an identical post already exists
+      const existingPost = await db.oneOrNone(
+        `SELECT post_id FROM posts WHERE text = $1 AND user_id = $2 AND community_id = $3 LIMIT 1`,
+        [post.text, post.user_id, post.community_id]
+      );
+
+      if (existingPost) {
+        insertedPostIds.push(existingPost.post_id);
+        continue;
       }
+
+      const result = await db.one(
+        `INSERT INTO posts (text, user_id, community_id) VALUES ($1, $2, $3) RETURNING post_id`,
+        [post.text, post.user_id, post.community_id]
+      );
+      insertedPostIds.push(result.post_id);
     }
 
-    // Insert post likes using the actual post IDs
+    // Insert post likes using the actual post IDs, only if identical like doesn't exist
     for (let i = 0; i < plainPostLikes.length && i < insertedPostIds.length; i++) {
-      await db.none(
-        `INSERT INTO post_likes (user_id, post_id) VALUES ($1, $2) ON CONFLICT (user_id, post_id) DO NOTHING`,
-        [plainPostLikes[i].user_id, insertedPostIds[i]]
+      const likeUserId = plainPostLikes[i].user_id;
+      const likePostId = insertedPostIds[i];
+
+      const existingLike = await db.oneOrNone(
+        `SELECT 1 FROM post_likes WHERE user_id = $1 AND post_id = $2 LIMIT 1`,
+        [likeUserId, likePostId]
       );
+
+      if (!existingLike) {
+        await db.none(
+          `INSERT INTO post_likes (user_id, post_id) VALUES ($1, $2)`,
+          [likeUserId, likePostId]
+        );
+      }
     }
     console.log('Sample data initialized successfully');
   } catch (error) {
@@ -242,6 +263,12 @@ const hbs = handlebars.create({
       // Access user from template context via options.data.root
       // This works even inside {{#each}} loops
       return a === b;
+    },
+    getUserById: (id) => {
+      return db.one('SELECT * FROM users WHERE user_id = $1', [id]);
+    },
+    likePost: (postId, userId) => {
+      return db.none('INSERT INTO post_likes (post_id, user_id) VALUES ($1, $2)', [postId, userId]);
     }
   }
 });
@@ -576,12 +603,57 @@ app.get('/communities/:community_id', isAuthenticated, async (req, res) => {
     `SELECT * FROM communities WHERE community_id = $1`,
     [req.params.community_id]
   );
+  const posts = await db.any(
+    `SELECT * FROM posts WHERE community_id = $1`,
+    [req.params.community_id]
+  );
+  const postIds = posts.map(post => post.post_id);
+  let likes = [];
+  if (postIds.length > 0) {
+    likes = await db.any(
+      `SELECT post_id, COUNT(*) AS like_count
+       FROM post_likes
+       WHERE post_id = ANY($1::int[])
+       GROUP BY post_id`,
+      [postIds]
+    );
+  }
+  for (const post of posts) {
+    post.user = await db.one('SELECT * FROM users WHERE user_id = $1', [post.user_id]);
+    post.likes = likes.find(like => like.post_id === post.post_id)?.like_count || 0;
+  }
   res.render('pages/community', {
     layout: 'main',
     title: 'Community',
     community: community,
-    user: req.session.user
+    user: req.session.user,
+    posts: posts,
   });
+});
+
+app.post('/posts/:post_id/like', isAuthenticated, async (req, res) => {
+  const postId = parseInt(req.params.post_id, 10);
+  if (Number.isNaN(postId)) {
+    return res.status(400).json({ error: 'Invalid post id' });
+  }
+  try {
+    await db.none(
+      `INSERT INTO post_likes (user_id, post_id)
+       VALUES ($1, $2)
+       ON CONFLICT (user_id, post_id) DO NOTHING`,
+      [req.session.user.user_id, postId]
+    );
+
+    const { like_count } = await db.one(
+      `SELECT COUNT(*)::int AS like_count FROM post_likes WHERE post_id = $1`,
+      [postId]
+    );
+
+    return res.status(200).json({ likes: like_count });
+  } catch (error) {
+    console.log('POST /posts/:post_id/like error:', error);
+    return res.status(500).json({ error: 'Could not like post' });
+  }
 });
 
 app.post('/communities/save-description', isAuthenticated, async (req, res) => {
