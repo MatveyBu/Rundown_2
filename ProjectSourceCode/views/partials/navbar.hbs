@@ -8,11 +8,11 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
-                    <a class="nav-link {{#if activeHome}}active{{/if}}" aria-current="page" href="#">Home</a>
+                    <a class="nav-link {{#if activeHome}}active{{/if}}" aria-current="page" href="/home">Home</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link {{#if activeHCommunities}}active{{/if}}" aria-current="page"
-                        href="#">Communities</a>
+                        href="/communities">Communities</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link {{#if activeNotifications}}active{{/if}}" aria-current="page"
@@ -34,7 +34,7 @@
                         {{user.name}}
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="/home">Profile</a></li>
+                        <li><a class="dropdown-item" href="/profile">Profile</a></li>
                         <li><a class="dropdown-item" href="/settings">Account Settings</a></li>
                         <li>
                             <hr class="dropdown-divider">

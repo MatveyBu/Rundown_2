@@ -1,0 +1,218 @@
+{{! Login page with CU Boulder branding}}
+<section class="auth-cu">
+  {{! Background and overlay visual}}
+  <div class="auth-bg"></div>
+  <div class="auth-overlay"></div>
+
+  <div class="container-fluid position-relative">
+    <div class="row justify-content-center">
+      <div class="col-12 col-sm-10 col-md-8 col-lg-5 col-xl-4">
+        <div class="card auth-card shadow">
+          <div class="card-body p-4 p-md-5">
+            <div class="text-center mb-3">
+              {{! CU logo and headings}}
+              <img
+                class="cu-logo mb-3"
+                src="https://upload.wikimedia.org/wikipedia/en/thumb/d/d3/Colorado_Buffaloes_logo.svg/1200px-Colorado_Buffaloes_logo.svg.png"
+                alt="CU Boulder Logo"
+                width="72" height="72"
+                referrerpolicy="no-referrer"
+              />
+              <h1 class="h4 mb-1 fw-semibold">Rundown</h1>
+              <p class="text-secondary mb-4">University of Colorado Boulder</p>
+            </div>
+            {{! Display error message}}
+            {{#if error}}
+            <div class="alert alert-danger" role="alert">
+              {{error}}
+            </div>
+            {{/if}}
+            {{! Login form with validation}}
+            <form action="/register" method="POST" class="needs-validation" novalidate>
+              <div class="form-floating mb-3">
+                <input
+                  type="text"
+                  class="form-control"
+                  id="username"
+                  name="username"
+                  placeholder="Username"
+                  value="{{username}}"
+                  required
+                  autocomplete="username"
+                />
+                <label for="username">Username</label>
+                <div class="invalid-feedback">Please enter your username.</div>
+              </div>
+              <div class="form-floating mb-3">
+                <input
+                  type="text"
+                  class="form-control"
+                  id="email"
+                  name="email"
+                  placeholder="School Email"
+                  value="{{email}}"
+                  required
+                  autocomplete="email"
+                  pattern = "^.+@colorado\.edu$"
+                />
+                <label for="email">School Email</label>
+                <div class="invalid-feedback">Please enter your school email.</div>
+              </div>
+
+              <div class="form-floating mb-3 position-relative">
+                <input
+                  type="password"
+                  class="form-control"
+                  id="password"
+                  name="password"
+                  placeholder="Password"
+                  required
+                  autocomplete="current-password"
+                  minlength="8"
+                />
+                <label for="password">Password</label>
+                {{! Password show/hide toggle button}}
+                <button class="btn btn-link p-0 auth-toggle" type="button" id="togglePw">Show</button>
+                <p class="small text-muted text-center mb-3" style="margin-top: 1rem;">Password must be at least 8 characters long</p>
+
+              <div class="form-floating mb-3 position-relative">
+                <input
+                  type="password"
+                  class="form-control"
+                  id="password_confirm"
+                  name="password_confirm"
+                  placeholder="Confirm Password"
+                  required
+                  autocomplete="current-password"
+                />
+                <label for="password_confirm">Confirm Password</label>
+                {{! Password show/hide toggle button}}
+                <button class="btn btn-link p-0 auth-toggle" type="button" id="togglePw_confirm">Show</button>
+                <div class="invalid-feedback">Passwords do not match.</div>
+              </div>
+
+              <button type="submit" class="btn btn-cu w-100" id="registerBtn" disabled>Register</button>
+
+              <p class="text-center mt-3 mb-0 small text-secondary">
+                Already have an account?
+                <a href="/login" class="link-cu text-decoration-none">Login</a>
+              </p>
+            </form>
+          </div>
+        </div>
+
+        {{> footer}}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .is-valid-custom {
+    border-color: #198754 !important;
+    padding-right: calc(3.5rem) !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='M2.3 6.73.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(4rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+  }
+
+  .is-invalid-custom {
+    border-color: #dc3545 !important;
+    padding-right: calc(3.5rem) !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(4rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+  }
+</style>
+
+<script>
+//bootstrap form validation requiring inputs before submission
+(() => {
+  const form = document.querySelector('.needs-validation');
+  if (!form) return;
+  form.addEventListener('submit', (e) => {
+    if (!form.checkValidity()) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    form.classList.add('was-validated');
+  });
+})();
+
+//password show/hide toggle
+document.getElementById('togglePw')?.addEventListener('click', () => {
+  const pw = document.getElementById('password');
+  const btn = document.getElementById('togglePw');
+  const hidden = pw.type === 'password';
+  pw.type = hidden ? 'text' : 'password';
+  btn.textContent = hidden ? 'Hide' : 'Show';
+});
+
+document.getElementById('togglePw_confirm')?.addEventListener('click', () => {
+  const pw = document.getElementById('password_confirm');
+  const btn = document.getElementById('togglePw_confirm');
+  const hidden = pw.type === 'password';
+  pw.type = hidden ? 'text' : 'password';
+  btn.textContent = hidden ? 'Hide' : 'Show';
+});
+
+// Validate all fields and matching passwords with visual feedback
+document.addEventListener('DOMContentLoaded', () => {
+    const username = document.getElementById('username');
+    const email = document.getElementById('email');
+    const pw = document.getElementById('password');
+    const pw2 = document.getElementById('password_confirm');
+    const btn = document.getElementById('registerBtn');
+
+    function validateForm() {
+        if (!username || !email || !pw || !pw2 || !btn) return;
+        
+        const usernameValue = username.value.trim();
+        const emailValue = email.value.trim();
+        const password = pw.value;
+        const confirmPassword = pw2.value;
+        console.log(usernameValue, emailValue, password, confirmPassword);
+
+        // Reset password classes
+        pw.classList.remove('is-valid-custom', 'is-invalid-custom');
+        pw2.classList.remove('is-valid-custom', 'is-invalid-custom');
+
+        // Check all field requirements
+        const usernameValid = usernameValue.length > 0;
+        const emailValid = emailValue.length > 0 && /^.+@colorado\.edu$/.test(emailValue);
+        const passwordLengthValid = password.length >= 8;
+        const passwordsMatch = password === confirmPassword && password.length > 0 && confirmPassword.length > 0;
+
+        // Apply visual feedback for password fields only
+        if (password.length > 0) {
+            if (passwordLengthValid && (confirmPassword.length === 0 || passwordsMatch)) {
+                pw.classList.add('is-valid-custom');
+            } else {
+                pw.classList.add('is-invalid-custom');
+            }
+        }
+
+        if (confirmPassword.length > 0) {
+            if (passwordsMatch && passwordLengthValid) {
+                pw2.classList.add('is-valid-custom');
+            } else {
+                pw2.classList.add('is-invalid-custom');
+            }
+        }
+
+        // Enable button only if all fields are valid and passwords match
+        btn.disabled = !(usernameValid && emailValid && passwordLengthValid && passwordsMatch);
+    }
+
+    // Add event listeners to all fields
+    if (username && email && pw && pw2) {
+        username.addEventListener('input', validateForm);
+        email.addEventListener('input', validateForm);
+        pw.addEventListener('input', validateForm);
+        pw2.addEventListener('input', validateForm);
+        validateForm();
+    }
+});
+</script>
