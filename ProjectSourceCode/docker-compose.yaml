@@ -6,7 +6,7 @@ services:
       - "5432"
     volumes:
       - rundown:/var/lib/postgresql/data
-      - ./SQL:/docker-entrypoint-initdb.d
+      - ./init_data:/docker-entrypoint-initdb.d
   web:
     image: node:lts
     user: "node" #you can remove this if you are facing access issues when installing node packages
