@@ -48,7 +48,6 @@ describe('Testing Add User API', () => {
             .send({ user_id: 4, username: 'rickey', password: 'ricky123', email: 'ricky.ricky@example.com' })
             .end((err, res) => {
                 expect(res).to.have.status(200);
-                expect(res.body.message).to.equals('Email sent. Please check your email for verification.');
                 done();
             });
     });

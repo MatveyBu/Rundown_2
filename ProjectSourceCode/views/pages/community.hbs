@@ -1,0 +1,131 @@
+{{! Profile page wrapper with CU color bg}}
+<section class="community-wrap">
+    <div class="container">
+        <div class="row justify-content-center mt-4 mb-5">
+            <div class="col-12 col-md-10 col-lg-8">
+
+                {{! Page title and back to communities and home buttons}}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <a href="/communities" class="btn btn-outline-cu btn-sm">&laquo; Communities</a>
+                    <div class="d-flex align-items-center gap-3">
+
+                        <div>
+                            <h2>{{community.name}}</h2>
+                        </div>
+                    </div>
+                    <a href="/home" class="btn btn-outline-cu btn-sm">Return to Home Page</a>
+                </div>
+                {{! Community card with community info and edit form}}
+                <div class="card community-card shadow-sm mb-4">
+                    <div class="card-body p-4 p-md-5">
+                        {{! Community info section}}
+                        <div class="d-flex align-items-center gap-4 mb-4">
+                            {{! Community details}}
+                            <div class="w-100">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div class="fw-semibold small">Created at: {{formatDate community.created_at}}</div>
+                                    <button type="button" id="post-toggle" class="btn btn-outline-cu btn-sm">Create
+                                        Post</button>
+                                </div>
+
+                                <div class="text-secondary small fw-bold">{{community.community_type}}</div>
+                                <div class="text-secondary small">{{community.number_of_members}} Members</div>
+
+                            </div>
+                        </div>
+                        {{! messages for save success or error}}
+                        {{#if saved}}<div class="alert alert-success">Changes have been saved.</div>{{/if}}
+                        {{#if error}}<div class="alert alert-danger">{{error}}</div>{{/if}}
+
+                        <form action="/communities/save-description" method="POST" class="row g-3">
+
+                            <div class="col-12">
+                                <label for="description" class="form-label">Description</label>
+
+                                <textarea id="description" name="description" class="form-control" rows="4" {{#unless
+                                    (eq user.role 'moderator'
+                                    )}}readonly{{/unless}}>{{community.description}}</textarea>
+                            </div>
+
+                            <div class="col-12">
+                                {{#if (eq user.role 'moderator')}}
+                                {{#if community.description}}
+                                <button type="submit" class="btn btn-cu w-100">Save Description</button>
+                                {{/if}}
+                                {{/if}}
+                            </div>
+
+                        </form>
+                        {{! need to add section for moderatiors to change community details}}
+                        <hr class="my-4">
+                        <div id="post-section" class="mt-3 d-none">
+                            <form action="/communities/create-post" method="POST" class="row g-3">
+                                <input type="hidden" name="community_id" value="{{community.community_id}}">
+                                <div class="col-12">
+                                    <label for="post_text" class="form-label">Enter Text:</label>
+                                    <input id="post_text" name="post_text" type="text" class="form-control" required>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-cu w-100">Post</button>
+                                </div>
+                            </form>
+                            {{! script for toggling post creation section}}
+                            <script>
+                                document.getElementById('post-toggle').addEventListener('click', function () {
+                                    const postSection = document.getElementById('post-section');
+                                    postSection.classList.toggle('d-none');
+                                });
+                            </script>
+                        </div>
+                        <hr class="my-4">
+                        <h3>Posts</h3>
+                        {{#each posts}}
+                        <div class="card mb-3">
+                            <div class="card-body">
+
+                                <h5 class="card-title">{{text}}</h5>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <button type="button" class="btn btn-outline-cu btn-sm"
+                                        onclick="likePost(event, {{post_id}});"><i class="bi bi-hand-thumbs-up"></i>
+                                        <span id="like-count-{{post_id}}">{{likes}}</span> Likes
+                                    </button>
+                                    <p class="card-text small text-muted">Posted by {{user.username}} at:
+                                        {{formatDate created_at}}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {{/each}}
+                        <script>
+                            async function likePost(event, postId) {
+                                const button = event.currentTarget;
+                                button.disabled = true;
+                                try {
+                                    const response = await fetch(`/posts/${postId}/like`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        credentials: 'same-origin'
+                                    });
+                                    if (!response.ok) {
+                                        throw new Error('Request failed');
+                                    }
+                                    const data = await response.json();
+                                    const countEl = document.getElementById(`like-count-${postId}`);
+                                    if (countEl && typeof data.likes === 'number') {
+                                        countEl.textContent = data.likes;
+                                    }
+                                } catch (error) {
+                                    alert('Unable to like post right now. Please try again later.');
+                                } finally {
+                                    button.disabled = false;
+                                }
+                            }
+                        </script>
+                    </div>
+                </div>
+                {{> footer}}
+            </div>
+        </div>
+    </div>
+</section>
