@@ -36,9 +36,9 @@ db.connect()
     obj.done(); // success, release the connection;
 
     // Initialize default users after database connection is established
-    await initializeUsers();
+    //await initializeUsers();
     // Initialize default communities and user_community connections
-    await initializeSampleData();
+    //await initializeSampleData();
   })
   .catch(error => {
     console.log('ERROR:', error.message || error);
