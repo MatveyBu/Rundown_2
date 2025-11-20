@@ -1,0 +1,78 @@
+{{! Profile page wrapper with CU color bg}}
+<section class="explore-wrap">
+    <div class="container">
+        <div class="row justify-content-center mt-4 mb-5">
+            <div class="col-12 col-md-10 col-lg-8">
+                {{! Page title and back to home button}}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex align-items-center gap-3">
+
+                        <div>
+                            <h2>Explore Communities</h2>
+                        </div>
+                    </div>
+                    <a href="/home" class="btn btn-outline-cu btn-sm">Return to Home Page</a>
+                </div>
+                {{! Community card with community info and edit form}}
+                {{#each communities}}
+                <div class="card explore-card shadow-sm mb-4">
+                    <div class="card-body p-4 p-md-5">
+                        {{! Community info section}}
+                        <div class="d-flex align-items-center gap-4 mb-4">
+                            {{! Community details}}
+                            <div class="w-100">
+                                <div class="h5 mb-2 fw-bold">{{name}}</div>
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="fw-semibold small m-0">Created at: {{formatDate created_at}}</div>
+                                    <button type="button" class="btn btn-cu btn-sm ms-auto"
+                                        onclick="joinCommunity({{community_id}})">Join Community</button>
+                                </div>
+
+                                <div class="text-secondary small fw-bold">({{community_type}})</div>
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="text-secondary small m-0">{{number_of_members}} Members</div>
+                                </div>
+
+                            </div>
+                        </div>
+                        {{! messages for save success or error}}
+                        {{#if saved}}<div class="alert alert-success">Changes have been saved.</div>{{/if}}
+                        {{#if error}}<div class="alert alert-danger">{{error}}</div>{{/if}}
+
+
+
+                        <div class="col-12">
+                            <label for="description" class="form-label">Description</label>
+
+                            <textarea id="description" name="description" class="form-control" rows="4" {{#unless (eq
+                                ../user.role 'moderator' )}}readonly{{/unless}}>{{description}}</textarea>
+                        </div>
+
+                    </div>
+                </div>
+                <script>
+                    async function joinCommunity(communityId) {
+                        const response = await fetch(`/communities/${communityId}/join`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        if (!response.ok) {
+                            throw new Error('Request failed');
+                        }
+                        const data = await response.json();
+                        if (data.success) {
+                            window.location.href = `/communities/${communityId}`;
+                        }
+                        else {
+                            alert('Unable to join community right now. Please try again later.');
+                        }
+                    }
+                </script>
+                {{/each}}
+                {{> footer}}
+            </div>
+        </div>
+    </div>
+</section>

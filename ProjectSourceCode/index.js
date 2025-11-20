@@ -574,6 +574,40 @@ app.post('/profile/change-password', isAuthenticated, async (req, res) => {
   }
 });
 
+app.get('/explore', isAuthenticated, async (req, res) => {
+  const communities = await db.any(
+    `SELECT c.*
+     FROM communities c
+     WHERE NOT EXISTS (
+       SELECT 1
+       FROM users_communities uc
+       WHERE uc.community_id = c.community_id
+         AND uc.user_id = $1
+     )`,
+    [req.session.user.user_id]
+  );
+  res.render('pages/explore', {
+    layout: 'main',
+    title: 'Explore',
+    user: req.session.user,
+    communities: communities
+  });
+});
+
+app.post('/communities/:community_id/join', isAuthenticated, async (req, res) => {
+  const communityId = parseInt(req.params.community_id, 10);
+  if (Number.isNaN(communityId)) {
+    return res.status(400).json({ error: 'Invalid community id' });
+  }
+  try {
+    await db.none('INSERT INTO users_communities (user_id, community_id) VALUES ($1, $2)', [req.session.user.user_id, communityId]);
+    return res.status(200).json({ success: true });
+  } catch (e) {
+    console.log('POST /communities/:community_id/join error:', e);
+    return res.status(500).json({ success: false, error: 'Could not join community' });
+  }
+});
+
 app.get('/communities', isAuthenticated, async (req, res) => {
   const communities = await db.any(
     `SELECT c.*
