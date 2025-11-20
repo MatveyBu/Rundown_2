@@ -712,9 +712,23 @@ app.post('/communities/create-post', isAuthenticated, async (req, res) => {
   }
 });
 
+app.post('/communities/:community_id/leave', isAuthenticated, async (req, res) => {
+  const communityId = parseInt(req.params.community_id, 10);
+  if (Number.isNaN(communityId)) {
+    return res.status(400).json({ error: 'Invalid community id' });
+  }
+  try {
+    await db.none('DELETE FROM users_communities WHERE user_id = $1 AND community_id = $2', [req.session.user.user_id, communityId]);
+    return res.status(200).json({ success: true });
+  } catch (e) {
+    console.log('POST /communities/:community_id/leave error:', e);
+    return res.status(500).json({ success: false, error: 'Could not leave community' });
+  }
+});
+
 
 app.get('/welcome', (req, res) => {
-  res.json({ status: 'success', message: 'Welcome!' });
+  res.json({ success: true, message: 'Welcome!' });
 });
 
 app.use(auth);
