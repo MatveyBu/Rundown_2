@@ -1,0 +1,21 @@
+<section class="activity-section">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <a href="/home" class="btn btn-outline-cu btn-sm">&laquo; Back to Home</a>
+            <h2 class="section-title">Recent Activity</h2>
+        </div>
+        {{#each activities}}
+        <div class="activity-card">
+            <div class="activity-header">
+                <span class="activity-community">{{community_name}}</span>
+                <span class="activity-time">{{formatDate created_at}}</span>
+            </div>
+            <h4 class="activity-title">{{text}}</h4>
+            {{#if image}}
+            <img src="{{image}}" alt="Post image" class="img-fluid rounded mt-2"
+                style="max-height: 400px; object-fit: contain;">
+            {{/if}}
+        </div>
+        {{/each}}
+    </div>
+</section>

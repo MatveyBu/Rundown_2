@@ -37,19 +37,22 @@
                         {{#if saved}}<div class="alert alert-success">Changes have been saved.</div>{{/if}}
                         {{#if error}}<div class="alert alert-danger">{{error}}</div>{{/if}}
 
-                        <form action="/communities/save-description" method="POST" class="row g-3">
+                        <form action="/communities/save-description" method="POST" class="row g-3"
+                            onclick="event.stopPropagation();">
 
                             <div class="col-12">
                                 <label for="description" class="form-label">Description</label>
 
                                 <textarea id="description" name="description" class="form-control" rows="4" {{#unless
-                                    (eq ../user.role 'moderator' )}}readonly{{/unless}}>{{description}}</textarea>
+                                    (eq ../user.role 'moderator' )}}readonly{{/unless}}
+                                    onclick="event.stopPropagation();">{{description}}</textarea>
                             </div>
 
                             <div class="col-12">
                                 {{#if (eq ../user.role 'moderator')}}
                                 {{#if description}}
-                                <button type="submit" class="btn btn-cu w-100">Save Description</button>
+                                <button type="submit" class="btn btn-cu w-100" onclick="event.stopPropagation();">Save
+                                    Description</button>
                                 {{/if}}
                                 {{/if}}
                             </div>

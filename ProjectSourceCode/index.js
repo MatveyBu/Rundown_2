@@ -5,6 +5,8 @@ const path = require('path');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const multer = require('multer');
+const fs = require('fs');
 const transporter = require('./email');
 const pgp = require('pg-promise')(); // To connect to the Postgres DB from the node server
 
@@ -49,6 +51,36 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 //static files middleware for serving CSS, JS, images, etc.
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Set up multer for file uploads
+const uploadsDir = path.join(__dirname, 'public', 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadsDir);
+  },
+  filename: function (req, file, cb) {
+    // Generate unique filename: timestamp-random-originalname
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + '-' + file.originalname);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  fileFilter: function (req, file, cb) {
+    // Accept only image files
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'), false);
+    }
+  }
+});
 
 // Session middleware
 app.use(session({
@@ -394,25 +426,25 @@ app.post('/register', async (req, res) => {
 
     const { email, username, password } = req.body;
     console.log(email, username, password);
-    
+
     // Validate input
     if (!email || !username || !password) {
       return res.status(400).json({ error: 'All fields are required' });
     }
-    
+
     const token = crypto.randomBytes(32).toString('hex');
-    
+
     const user = await db.oneOrNone('SELECT * FROM users WHERE username = $1', [username]);
     if (user) {
       return res.status(400).json({ error: 'Username already exists. Please try again.' });
     }
-    
+
     console.log("After username check");
     const emailUser = await db.oneOrNone('SELECT * FROM users WHERE email = $1', [email]);
     if (emailUser) {
       return res.status(400).json({ error: 'Email already exists. Please try again.' });
     }
-    
+
     console.log("After validation checks");
     const hash = await bcrypt.hash(password, 10);
     await db.none('INSERT INTO verification_tokens (email, token, username, password) VALUES ($1, $2, $3, $4)', [email, token, username, hash]);
@@ -451,11 +483,24 @@ app.get('/logout', (req, res) => {
 });
 
 //get home (protected route)
-app.get('/home', isAuthenticated, (req, res) => {
+app.get('/home', isAuthenticated, async (req, res) => {
+  // Get the 3 most recent posts from communities the user is in
+  const recentPosts = await db.any(
+    `SELECT p.*, c.name as community_name
+     FROM posts p
+     INNER JOIN users_communities uc ON p.community_id = uc.community_id
+     INNER JOIN communities c ON p.community_id = c.community_id
+     WHERE uc.user_id = $1
+     ORDER BY p.created_at DESC
+     LIMIT 3`,
+    [req.session.user.user_id]
+  );
+
   res.render('pages/home', {
     layout: 'main',
     title: 'Home',
-    user: req.session.user
+    user: req.session.user,
+    recentPosts: recentPosts
   });
 });
 
@@ -736,7 +781,7 @@ app.post('/communities/save-description', isAuthenticated, async (req, res) => {
 });
 
 //profile page change password route
-app.post('/communities/create-post', isAuthenticated, async (req, res) => {
+app.post('/communities/create-post', isAuthenticated, upload.single('post_image'), async (req, res) => {
   const postText = (req.body.post_text || '').trim();
   const communityId = (req.body.community_id || '').trim();
 
@@ -751,14 +796,22 @@ app.post('/communities/create-post', isAuthenticated, async (req, res) => {
   }
 
   try {
-    await db.none('INSERT INTO posts (text, user_id, community_id) VALUES ($1, $2, $3)', [postText, req.session.user.user_id, communityId]);
-    return res.redirect('/communities?saved=1');
+    // Get image URL if file was uploaded
+    let imageUrl = null;
+    if (req.file) {
+      // Generate URL path for the uploaded file
+      imageUrl = `/uploads/${req.file.filename}`;
+    }
+
+    await db.none('INSERT INTO posts (text, user_id, community_id, image) VALUES ($1, $2, $3, $4)',
+      [postText, req.session.user.user_id, communityId, imageUrl]);
+    return res.redirect(`/communities/${communityId}?saved=1`);
   } catch (e) {
     console.log('POST /create-post error:', e);
-    return res.status(500).render('pages/communities', {
+    return res.status(500).render('pages/community', {
       layout: 'main',
-      title: 'Communities',
-      communities: req.session.communities,
+      title: 'Community',
+      community: req.session.community,
       user: req.session.user,
       error: 'An error occurred while creating the post'
     });
@@ -777,6 +830,24 @@ app.post('/communities/:community_id/leave', isAuthenticated, async (req, res) =
     console.log('POST /communities/:community_id/leave error:', e);
     return res.status(500).json({ success: false, error: 'Could not leave community' });
   }
+});
+
+app.get('/activity', isAuthenticated, async (req, res) => {
+  const activities = await db.any(
+    `SELECT p.*, c.name as community_name
+     FROM posts p
+     INNER JOIN users_communities uc ON p.community_id = uc.community_id
+     INNER JOIN communities c ON p.community_id = c.community_id
+     WHERE uc.user_id = $1
+     ORDER BY p.created_at DESC`,
+    [req.session.user.user_id]
+  );
+  res.render('pages/activity', {
+    layout: 'main',
+    title: 'Activities',
+    activities: activities,
+    user: req.session.user
+  });
 });
 
 

@@ -2,8 +2,8 @@ services:
   db:
     image: postgres:14
     env_file: .env
-    expose:
-      - "5432"
+    ports:
+      - "5432:5432"
     volumes:
       - rundown:/var/lib/postgresql/data
       - ./init_data:/docker-entrypoint-initdb.d
@@ -14,6 +14,8 @@ services:
     env_file: .env
     environment:
       - NODE_ENV=development
+      - HOST=db
+      - PORT=5432
     depends_on:
       - db
     ports:
