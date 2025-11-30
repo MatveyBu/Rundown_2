@@ -22,7 +22,7 @@ describe('Server!', () => {
             .get('/welcome')
             .end((err, res) => {
                 expect(res).to.have.status(200);
-                expect(res.body.status).to.equals('success');
+                expect(res.body.success).to.equals(true);
                 assert.strictEqual(res.body.message, 'Welcome!');
                 done();
             });
