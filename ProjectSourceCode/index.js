@@ -346,7 +346,7 @@ app.post('/login', async (req, res) => {
       console.log('Login failed: User not found:', username);
       return res.render('pages/login', {
         layout: 'main',
-        error: 'Invalid username or password',
+        error: 'Login failed: User not found. Register an account.',
         username
       });
     }
@@ -356,7 +356,7 @@ app.post('/login', async (req, res) => {
       console.log('Login failed: User has no password:', username);
       return res.render('pages/login', {
         layout: 'main',
-        error: 'Invalid username or password',
+        error: 'Login failed: User has no password. Please reset your password.',
         username
       });
     }
@@ -438,26 +438,56 @@ app.get('/register', (req, res) => {
 
 app.post('/register', async (req, res) => {
   try {
+    // Check if request wants JSON (test) or HTML (browser)
+    const acceptHeader = req.get('Accept') || '';
+    const contentType = req.get('Content-Type') || '';
+    const wantsJson = acceptHeader.includes('application/json') || contentType.includes('application/json');
 
     const { email, username, password } = req.body;
     console.log(email, username, password);
 
     // Validate input
     if (!email || !username || !password) {
-      return res.status(400).json({ error: 'All fields are required' });
+      if (wantsJson) {
+        return res.status(400).json({ message: 'All fields are required' });
+      }
+      return res.status(400).render('pages/register', {
+        layout: 'main',
+        error: 'All fields are required',
+        email,
+        username
+      });
     }
 
     const token = crypto.randomBytes(32).toString('hex');
 
     const user = await db.oneOrNone('SELECT * FROM users WHERE username = $1', [username]);
     if (user) {
-      return res.status(400).json({ error: 'Username already exists. Please try again.' });
+      if (wantsJson) {
+        console.log("In the testing part")
+        return res.status(400).json({ error: 'Username already exists. Please try again.' });
+      }
+      console.log("In the rendering part")
+      return res.status(400).render('pages/register', {
+        layout: 'main',
+        error: 'Username already exists. Please try again.',
+        email,
+        username
+      });
     }
 
     console.log("After username check");
     const emailUser = await db.oneOrNone('SELECT * FROM users WHERE email = $1', [email]);
     if (emailUser) {
-      return res.status(400).json({ error: 'Email already exists. Please try again.' });
+      if (wantsJson) {
+        return res.status(400).json({ message: 'Email already exists. Please try again.' });
+      }
+      return res.status(400).render('pages/register', {
+        layout: 'main',
+        error: 'Email already exists. Please try again.',
+        email,
+        username
+      });
     }
 
     console.log("After validation checks");
@@ -482,11 +512,32 @@ app.post('/register', async (req, res) => {
       }
     });
 
-
-    return res.render('pages/register', { message: 'Email sent. Please check your email for verification.' });
+    // Return appropriate response
+    if (wantsJson) {
+      return res.status(200).json({ message: 'Email sent. Please check your email for verification.' });
+    }
+    return res.status(200).render('pages/register', {
+      layout: 'main',
+      message: 'Email sent. Please check your email for verification.',
+      email,
+      username
+    });
   } catch (error) {
     console.error('Register error:', error);
-    return res.status(500).json({ error: 'An error occurred during registration' });
+    
+    const acceptHeader = req.get('Accept') || '';
+    const contentType = req.get('Content-Type') || '';
+    const wantsJson = acceptHeader.includes('application/json') || contentType.includes('application/json');
+    
+    if (wantsJson) {
+      return res.status(500).json({ message: 'An error occurred during registration' });
+    }
+    return res.status(500).render('pages/register', {
+      layout: 'main',
+      error: 'An error occurred during registration',
+      email: req.body.email,
+      username: req.body.username
+    });
   }
 });
 

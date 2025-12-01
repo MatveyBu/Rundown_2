@@ -27,6 +27,11 @@
               {{error}}
             </div>
             {{/if}}
+            {{#if message}}
+            <div class="alert alert-info" role="alert">
+              {{message}}
+            </div>
+            {{/if}}
             {{! Login form with validation}}
             <form action="/register" method="POST" class="needs-validation" novalidate>
               <div class="form-floating mb-3">
