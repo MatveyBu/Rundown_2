@@ -102,11 +102,19 @@
                                     style="max-height: 400px; object-fit: contain;">
                                 {{/if}}
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <button type="button" class="btn btn-outline-cu btn-sm"
-                                        onclick="likePost(event, {{post_id}});"><i class="bi bi-hand-thumbs-up"></i>
-                                        <span id="like-count-{{post_id}}">{{likes}}</span> Likes
-                                    </button>
-                                    <p class="card-text small text-muted">Posted by {{user.username}} at:
+                                    <div>
+                                        <button type="button" class="btn btn-outline-cu btn-sm"
+                                            onclick="likePost(event, {{post_id}});"><i class="bi bi-hand-thumbs-up"></i>
+                                            <span id="like-count-{{post_id}}">{{likes}}</span> Likes
+                                        </button>
+                                        {{#if ../canModerate}}
+                                        <button type="button" class="btn btn-outline-danger btn-sm ms-2"
+                                            onclick="banUserFromCommunity({{user.user_id}}, '{{user.username}}')">
+                                            <i class="bi bi-ban"></i> Ban User
+                                        </button>
+                                        {{/if}}
+                                    </div>
+                                    <p class="card-text small text-muted mb-0">Posted by {{user.username}} at:
                                         {{formatDate created_at}}</p>
                                 </div>
                             </div>
@@ -152,6 +160,29 @@
                                     alert('Unable to like post right now. Please try again later.');
                                 } finally {
                                     button.disabled = false;
+                                }
+                            }
+
+                            async function banUserFromCommunity(userId, username) {
+                                const reason = prompt(`Enter reason for banning ${username} from this community:`);
+                                if (!reason) return;
+
+                                const communityId = {{community.community_id}};
+                                try {
+                                    const response = await fetch(`/communities/${communityId}/ban/${userId}`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ reason })
+                                    });
+                                    const data = await response.json();
+                                    if (response.ok) {
+                                        alert(`${username} has been banned from this community.`);
+                                        location.reload();
+                                    } else {
+                                        alert(data.error || 'Failed to ban user');
+                                    }
+                                } catch (error) {
+                                    alert('Error banning user. Please try again.');
                                 }
                             }
                         </script>
