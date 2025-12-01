@@ -27,6 +27,11 @@
               {{error}}
             </div>
             {{/if}}
+            {{#if message}}
+            <div class="alert alert-info" role="alert">
+              {{message}}
+            </div>
+            {{/if}}
             {{! Login form with validation}}
             <form action="/register" method="POST" class="needs-validation" novalidate>
               <div class="form-floating mb-3">
@@ -73,7 +78,8 @@
                 <label for="password">Password</label>
                 {{! Password show/hide toggle button}}
                 <button class="btn btn-link p-0 auth-toggle" type="button" id="togglePw">Show</button>
-                <p class="small text-muted text-center mb-3" style="margin-top: 1rem;">Password must be at least 8 characters long</p>
+              </div>
+              <p class="small text-muted text-center mb-3" style="margin-top: -0.5rem;">Password must be at least 8 characters long</p>
 
               <div class="form-floating mb-3 position-relative">
                 <input
@@ -125,6 +131,13 @@
     background-position: right calc(4rem) center;
     background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
   }
+
+  /* Email field specific positioning - no toggle button, so move icon to the right */
+  #email.is-valid-custom,
+  #email.is-invalid-custom {
+    padding-right: calc(1.5rem) !important;
+    background-position: right calc(0.5rem) center !important;
+  }
 </style>
 
 <script>
@@ -133,10 +146,6 @@
   const form = document.querySelector('.needs-validation');
   if (!form) return;
   form.addEventListener('submit', (e) => {
-    if (!form.checkValidity()) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
     form.classList.add('was-validated');
   });
 })();
@@ -173,11 +182,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const emailValue = email.value.trim();
         const password = pw.value;
         const confirmPassword = pw2.value;
-        console.log(usernameValue, emailValue, password, confirmPassword);
 
-        // Reset password classes
+        // Reset classes
         pw.classList.remove('is-valid-custom', 'is-invalid-custom');
         pw2.classList.remove('is-valid-custom', 'is-invalid-custom');
+        email.classList.remove('is-valid-custom', 'is-invalid-custom');
 
         // Check all field requirements
         const usernameValid = usernameValue.length > 0;
@@ -185,7 +194,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const passwordLengthValid = password.length >= 8;
         const passwordsMatch = password === confirmPassword && password.length > 0 && confirmPassword.length > 0;
 
-        // Apply visual feedback for password fields only
+        // Apply visual feedback for email field
+        if (emailValue.length > 0) {
+            if (emailValid) {
+                email.classList.add('is-valid-custom');
+            } else {
+                email.classList.add('is-invalid-custom');
+            }
+        }
+
+        // Apply visual feedback for password fields
         if (password.length > 0) {
             if (passwordLengthValid && (confirmPassword.length === 0 || passwordsMatch)) {
                 pw.classList.add('is-valid-custom');

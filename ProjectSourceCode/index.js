@@ -5,6 +5,8 @@ const path = require('path');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const multer = require('multer');
+const fs = require('fs');
 const transporter = require('./email');
 const pgp = require('pg-promise')(); // To connect to the Postgres DB from the node server
 
@@ -20,8 +22,8 @@ const auth = (req, res, next) => {
 
 // Connect to DB
 const dbConfig = {
-  host: 'db', // the database server
-  port: 5432, // the database port
+  host: process.env.HOST, // the database server
+  port: process.env.PORT, // the database port
   database: process.env.POSTGRES_DB, // the database name
   user: process.env.POSTGRES_USER, // the user account to connect with
   password: process.env.POSTGRES_PASSWORD, // the password of the user account
@@ -49,6 +51,36 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 //static files middleware for serving CSS, JS, images, etc.
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Set up multer for file uploads
+const uploadsDir = path.join(__dirname, 'public', 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadsDir);
+  },
+  filename: function (req, file, cb) {
+    // Generate unique filename: timestamp-random-originalname
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + '-' + file.originalname);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  fileFilter: function (req, file, cb) {
+    // Accept only image files
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'), false);
+    }
+  }
+});
 
 // Session middleware
 app.use(session({
@@ -314,7 +346,7 @@ app.post('/login', async (req, res) => {
       console.log('Login failed: User not found:', username);
       return res.render('pages/login', {
         layout: 'main',
-        error: 'Invalid username or password',
+        error: 'Login failed: User not found. Register an account.',
         username
       });
     }
@@ -324,7 +356,7 @@ app.post('/login', async (req, res) => {
       console.log('Login failed: User has no password:', username);
       return res.render('pages/login', {
         layout: 'main',
-        error: 'Invalid username or password',
+        error: 'Login failed: User has no password. Please reset your password.',
         username
       });
     }
@@ -339,14 +371,20 @@ app.post('/login', async (req, res) => {
       });
     }
 
-    // Create session
+    // Create session with all user data including profile_picture
+    // Compute full name for display
+    const fullName = (user.first_name ? user.first_name : '') + (user.last_name ? (' ' + user.last_name) : '');
+    const displayName = fullName.trim() || user.username;
+
     req.session.user = {
       username: user.username,
       user_id: user.user_id,
       role: user.role,
       first_name: user.first_name,
       last_name: user.last_name,
-      email: user.email
+      email: user.email,
+      profile_picture: user.profile_picture,
+      name: displayName
     };
 
     console.log('Login successful for user:', username);
@@ -375,11 +413,20 @@ app.get('/verify-email', async (req, res) => {
   }
   await db.none('INSERT INTO users (email, password, username) VALUES ($1, $2, $3)', [verificationToken.email, verificationToken.password, verificationToken.username]);
   const user = await db.one('SELECT * FROM users WHERE username = $1', [verificationToken.username]);
+
+  // Compute full name for display
+  const fullName = (user.first_name ? user.first_name : '') + (user.last_name ? (' ' + user.last_name) : '');
+  const displayName = fullName.trim() || user.username;
+
   req.session.user = {
     username: user.username,
-    role: 'user',
-    name: user.name,
+    user_id: user.user_id,
+    role: user.role || 'member',
+    first_name: user.first_name,
+    last_name: user.last_name,
     email: user.email,
+    profile_picture: user.profile_picture,
+    name: displayName
   };
   await db.none('DELETE FROM verification_tokens WHERE token = $1', [token]);
   return res.redirect('/home');
@@ -390,41 +437,108 @@ app.get('/register', (req, res) => {
 });
 
 app.post('/register', async (req, res) => {
-  const { email, username, password } = req.body;
-  console.log(email, username, password);
-  const token = crypto.randomBytes(32).toString('hex');
-  const user = await db.oneOrNone('SELECT * FROM users WHERE username = $1', [username])
-  if (user != undefined && user.length > 0) {
-    return res.status(400).send({ error: 'Username already exists. Please try again.' });
-  }
-  console.log("After username check");
-  const emailUser = await db.oneOrNone('SELECT * FROM users WHERE email = $1', [email])
-  if (emailUser != undefined && emailUser.length > 0) {
-    return res.status(400).send({ error: 'Email already exists. Please try again.' });
-  }
-  console.log("After validation checks");
-  const hash = await bcrypt.hash(password, 10);
-  await db.none('INSERT INTO verification_tokens (email, token, username, password) VALUES ($1, $2, $3, $4)', [email, token, username, hash]);
+  try {
+    // Check if request wants JSON (test) or HTML (browser)
+    const acceptHeader = req.get('Accept') || '';
+    const contentType = req.get('Content-Type') || '';
+    const wantsJson = acceptHeader.includes('application/json') || contentType.includes('application/json');
 
-  const mailOptions = {
-    from: 'dhilonprasad@gmail.com',
-    to: email,
-    subject: 'Verification Email',
-    text: 'Please verify your email by clicking the link below: http://localhost:3000/verify-email?token=' + token
-  };
+    const { email, username, password } = req.body;
+    console.log(email, username, password);
 
-  // Send email asynchronously without blocking the response
-  console.log("Sending email to:", email);
-  transporter.sendMail(mailOptions, (error, info) => { //no Promise wrapper needed here because can be asycn and would time out the testcase
-    if (error) {
-      console.error('Error sending email:', error);
-      console.error('Email error details:', error.message, error.code);
-    } else {
-      console.log("Email sent successfully:", info.response);
+    // Validate input
+    if (!email || !username || !password) {
+      if (wantsJson) {
+        return res.status(400).json({ message: 'All fields are required' });
+      }
+      return res.status(400).render('pages/register', {
+        layout: 'main',
+        error: 'All fields are required',
+        email,
+        username
+      });
     }
-  });
 
-  return res.status(200).send({ message: 'Email sent. Please check your email for verification.' });
+    const token = crypto.randomBytes(32).toString('hex');
+
+    const user = await db.oneOrNone('SELECT * FROM users WHERE username = $1', [username]);
+    if (user) {
+      if (wantsJson) {
+        console.log("In the testing part")
+        return res.status(400).json({ error: 'Username already exists. Please try again.' });
+      }
+      console.log("In the rendering part")
+      return res.status(400).render('pages/register', {
+        layout: 'main',
+        error: 'Username already exists. Please try again.',
+        email,
+        username
+      });
+    }
+
+    console.log("After username check");
+    const emailUser = await db.oneOrNone('SELECT * FROM users WHERE email = $1', [email]);
+    if (emailUser) {
+      if (wantsJson) {
+        return res.status(400).json({ message: 'Email already exists. Please try again.' });
+      }
+      return res.status(400).render('pages/register', {
+        layout: 'main',
+        error: 'Email already exists. Please try again.',
+        email,
+        username
+      });
+    }
+
+    console.log("After validation checks");
+    const hash = await bcrypt.hash(password, 10);
+    await db.none('INSERT INTO verification_tokens (email, token, username, password) VALUES ($1, $2, $3, $4)', [email, token, username, hash]);
+
+    const mailOptions = {
+      from: 'dhilonprasad@gmail.com',
+      to: email,
+      subject: 'Verification Email',
+      text: 'Please verify your email by clicking the link below: http://localhost:3000/verify-email?token=' + token
+    };
+
+    // Send email asynchronously without blocking the response
+    console.log("Sending email to:", email);
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error('Error sending email:', error);
+        console.error('Email error details:', error.message, error.code);
+      } else {
+        console.log("Email sent successfully:", info.response);
+      }
+    });
+
+    // Return appropriate response
+    if (wantsJson) {
+      return res.status(200).json({ message: 'Email sent. Please check your email for verification.' });
+    }
+    return res.status(200).render('pages/register', {
+      layout: 'main',
+      message: 'Email sent. Please check your email for verification.',
+      email,
+      username
+    });
+  } catch (error) {
+    console.error('Register error:', error);
+    
+    const acceptHeader = req.get('Accept') || '';
+    const contentType = req.get('Content-Type') || '';
+    const wantsJson = acceptHeader.includes('application/json') || contentType.includes('application/json');
+    
+    if (wantsJson) {
+      return res.status(500).json({ message: 'An error occurred during registration' });
+    }
+    return res.status(500).render('pages/register', {
+      layout: 'main',
+      error: 'An error occurred during registration',
+      email: req.body.email,
+      username: req.body.username
+    });
+  }
 });
 
 //logout
@@ -435,11 +549,24 @@ app.get('/logout', (req, res) => {
 });
 
 //get home (protected route)
-app.get('/home', isAuthenticated, (req, res) => {
+app.get('/home', isAuthenticated, async (req, res) => {
+  // Get the 3 most recent posts from communities the user is in
+  const recentPosts = await db.any(
+    `SELECT p.*, c.name as community_name
+     FROM posts p
+     INNER JOIN users_communities uc ON p.community_id = uc.community_id
+     INNER JOIN communities c ON p.community_id = c.community_id
+     WHERE uc.user_id = $1
+     ORDER BY p.created_at DESC
+     LIMIT 3`,
+    [req.session.user.user_id]
+  );
+
   res.render('pages/home', {
     layout: 'main',
     title: 'Home',
-    user: req.session.user
+    user: req.session.user,
+    recentPosts: recentPosts
   });
 });
 
@@ -577,6 +704,40 @@ app.post('/profile/change-password', isAuthenticated, async (req, res) => {
   }
 });
 
+app.get('/explore', isAuthenticated, async (req, res) => {
+  const communities = await db.any(
+    `SELECT c.*
+     FROM communities c
+     WHERE NOT EXISTS (
+       SELECT 1
+       FROM users_communities uc
+       WHERE uc.community_id = c.community_id
+         AND uc.user_id = $1
+     )`,
+    [req.session.user.user_id]
+  );
+  res.render('pages/explore', {
+    layout: 'main',
+    title: 'Explore',
+    user: req.session.user,
+    communities: communities
+  });
+});
+
+app.post('/communities/:community_id/join', isAuthenticated, async (req, res) => {
+  const communityId = parseInt(req.params.community_id, 10);
+  if (Number.isNaN(communityId)) {
+    return res.status(400).json({ error: 'Invalid community id' });
+  }
+  try {
+    await db.none('INSERT INTO users_communities (user_id, community_id) VALUES ($1, $2)', [req.session.user.user_id, communityId]);
+    return res.status(200).json({ success: true });
+  } catch (e) {
+    console.log('POST /communities/:community_id/join error:', e);
+    return res.status(500).json({ success: false, error: 'Could not join community' });
+  }
+});
+
 app.get('/communities', isAuthenticated, async (req, res) => {
   const communities = await db.any(
     `SELECT c.*
@@ -686,7 +847,7 @@ app.post('/communities/save-description', isAuthenticated, async (req, res) => {
 });
 
 //profile page change password route
-app.post('/communities/create-post', isAuthenticated, async (req, res) => {
+app.post('/communities/create-post', isAuthenticated, upload.single('post_image'), async (req, res) => {
   const postText = (req.body.post_text || '').trim();
   const communityId = (req.body.community_id || '').trim();
 
@@ -701,23 +862,63 @@ app.post('/communities/create-post', isAuthenticated, async (req, res) => {
   }
 
   try {
-    await db.none('INSERT INTO posts (text, user_id, community_id) VALUES ($1, $2, $3)', [postText, req.session.user.user_id, communityId]);
-    return res.redirect('/communities?saved=1');
+    // Get image URL if file was uploaded
+    let imageUrl = null;
+    if (req.file) {
+      // Generate URL path for the uploaded file
+      imageUrl = `/uploads/${req.file.filename}`;
+    }
+
+    await db.none('INSERT INTO posts (text, user_id, community_id, image) VALUES ($1, $2, $3, $4)',
+      [postText, req.session.user.user_id, communityId, imageUrl]);
+    return res.redirect(`/communities/${communityId}?saved=1`);
   } catch (e) {
     console.log('POST /create-post error:', e);
-    return res.status(500).render('pages/communities', {
+    return res.status(500).render('pages/community', {
       layout: 'main',
-      title: 'Communities',
-      communities: req.session.communities,
+      title: 'Community',
+      community: req.session.community,
       user: req.session.user,
       error: 'An error occurred while creating the post'
     });
   }
 });
 
+app.post('/communities/:community_id/leave', isAuthenticated, async (req, res) => {
+  const communityId = parseInt(req.params.community_id, 10);
+  if (Number.isNaN(communityId)) {
+    return res.status(400).json({ error: 'Invalid community id' });
+  }
+  try {
+    await db.none('DELETE FROM users_communities WHERE user_id = $1 AND community_id = $2', [req.session.user.user_id, communityId]);
+    return res.status(200).json({ success: true });
+  } catch (e) {
+    console.log('POST /communities/:community_id/leave error:', e);
+    return res.status(500).json({ success: false, error: 'Could not leave community' });
+  }
+});
+
+app.get('/activity', isAuthenticated, async (req, res) => {
+  const activities = await db.any(
+    `SELECT p.*, c.name as community_name
+     FROM posts p
+     INNER JOIN users_communities uc ON p.community_id = uc.community_id
+     INNER JOIN communities c ON p.community_id = c.community_id
+     WHERE uc.user_id = $1
+     ORDER BY p.created_at DESC`,
+    [req.session.user.user_id]
+  );
+  res.render('pages/activity', {
+    layout: 'main',
+    title: 'Activities',
+    activities: activities,
+    user: req.session.user
+  });
+});
+
 
 app.get('/welcome', (req, res) => {
-  res.json({ status: 'success', message: 'Welcome!' });
+  res.json({ success: true, message: 'Welcome!' });
 });
 
 app.use(auth);

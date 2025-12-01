@@ -27,6 +27,7 @@ CREATE TABLE communities(
 
 CREATE TABLE posts(
 	post_id SERIAL PRIMARY KEY,
+    image TEXT,
     community_id INT NOT NULL,
     user_id INT,
     text VARCHAR(500),
