@@ -1,27 +1,43 @@
 {{! Profile page wrapper with CU color bg}}
 <section class="community-wrap">
     <div class="container">
-        <div class="row justify-content-center mt-4 mb-5">
+
+        {{!-- Admin-only Add Community button (top left) --}}
+        {{#if (eq user.role 'admin')}}
+        <div class="row mt-4">
+            <div class="col-12">
+                <button class="btn btn-cu btn-sm add-community-btn" data-bs-toggle="modal"
+                    data-bs-target="#newCommunityModal">
+                    Add Community
+                </button>
+            </div>
+        </div>
+        {{/if}}
+
+        {{!-- Main centered content --}}
+        <div class="row justify-content-center mb-5 mt-4">
             <div class="col-12 col-md-10 col-lg-8">
+
                 {{! Page title and back to home button}}
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <div class="d-flex align-items-center gap-3">
-
                         <div>
                             <h2>Your Communities</h2>
                         </div>
                     </div>
                     <a href="/home" class="btn btn-outline-cu btn-sm">Return to Home Page</a>
                 </div>
+
                 {{! Community card with community info and edit form}}
                 {{#each communities}}
                 <div class="card community-card shadow-sm mb-4" onmouseover="this.style.cursor='pointer'"
                     onmouseleave="this.style.cursor='default'"
                     onclick="window.location.href='/communities/{{community_id}}'">
+
                     <div class="card-body p-4 p-md-5">
+
                         {{! Community info section}}
                         <div class="d-flex align-items-center gap-4 mb-4">
-                            {{! Community details}}
                             <div>
                                 <div>
                                     <div class="h5 mb-0 fw-bold">{{name}}</div>
@@ -30,10 +46,10 @@
 
                                 <div class="text-secondary small fw-bold">{{community_type}}</div>
                                 <div class="text-secondary small">{{number_of_members}} Members</div>
-
                             </div>
                         </div>
-                        {{! messages for save success or error}}
+
+                        {{!-- messages for save success or error --}}
                         {{#if saved}}<div class="alert alert-success">Changes have been saved.</div>{{/if}}
                         {{#if error}}<div class="alert alert-danger">{{error}}</div>{{/if}}
 
@@ -56,11 +72,51 @@
                                 {{/if}}
                                 {{/if}}
                             </div>
-
                         </form>
+
                     </div>
                 </div>
                 {{/each}}
+
+                {{!-- Modal for creating a new community (admin only) --}}
+                <div class="modal fade" id="newCommunityModal" tabindex="-1" aria-labelledby="newCommunityModalLabel"
+                    aria-hidden="true">
+
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="newCommunityModalLabel">Create a New Community</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+
+                            <form action="/communities/new" method="POST">
+                                <div class="modal-body">
+
+                                    <div class="mb-3">
+                                        <label for="name" class="form-label">Community Name</label>
+                                        <input class="form-control" type="text" name="name" id="name" required>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="description" class="form-label">Description</label>
+                                        <textarea class="form-control" name="description" id="description"
+                                            required></textarea>
+                                    </div>
+
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-cancel-cu"
+                                        data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-cu">Confirm</button>
+                                </div>
+                            </form>
+
+                        </div>
+                    </div>
+                </div>
+
                 {{> footer}}
             </div>
         </div>

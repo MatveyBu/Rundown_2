@@ -29,8 +29,10 @@ CREATE TABLE posts(
 	post_id SERIAL PRIMARY KEY,
     image TEXT,
     community_id INT NOT NULL,
-    text VARCHAR (500),
     user_id INT,
+    text VARCHAR(500),
+    image_url TEXT,
+    location VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
     FOREIGN KEY (community_id) REFERENCES communities(community_id) ON DELETE CASCADE
