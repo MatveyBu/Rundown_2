@@ -371,14 +371,20 @@ app.post('/login', async (req, res) => {
       });
     }
 
-    // Create session
+    // Create session with all user data including profile_picture
+    // Compute full name for display
+    const fullName = (user.first_name ? user.first_name : '') + (user.last_name ? (' ' + user.last_name) : '');
+    const displayName = fullName.trim() || user.username;
+
     req.session.user = {
       username: user.username,
       user_id: user.user_id,
       role: user.role,
       first_name: user.first_name,
       last_name: user.last_name,
-      email: user.email
+      email: user.email,
+      profile_picture: user.profile_picture,
+      name: displayName
     };
 
     console.log('Login successful for user:', username);
@@ -407,11 +413,20 @@ app.get('/verify-email', async (req, res) => {
   }
   await db.none('INSERT INTO users (email, password, username) VALUES ($1, $2, $3)', [verificationToken.email, verificationToken.password, verificationToken.username]);
   const user = await db.one('SELECT * FROM users WHERE username = $1', [verificationToken.username]);
+
+  // Compute full name for display
+  const fullName = (user.first_name ? user.first_name : '') + (user.last_name ? (' ' + user.last_name) : '');
+  const displayName = fullName.trim() || user.username;
+
   req.session.user = {
     username: user.username,
-    role: 'user',
-    name: user.name,
+    user_id: user.user_id,
+    role: user.role || 'member',
+    first_name: user.first_name,
+    last_name: user.last_name,
     email: user.email,
+    profile_picture: user.profile_picture,
+    name: displayName
   };
   await db.none('DELETE FROM verification_tokens WHERE token = $1', [token]);
   return res.redirect('/home');
