@@ -257,6 +257,155 @@ const isAuthenticated = (req, res, next) => {
   }
 };
 
+// create a new community
+app.post('/communities/new', isAuthenticated, async (req, res) => {
+  const name = (req.body.name || '').trim();
+  const description = (req.body.description || '').trim();
+  const communityType = (req.body.community_type || 'social').trim();
+  const userId = req.session.user.user_id;
+
+  if (!name) {
+    // Get user's communities to re-render the page
+    const communities = await db.any(
+      `SELECT c.*
+       FROM communities c
+       JOIN users_communities uc ON uc.community_id = c.community_id
+       WHERE uc.user_id = $1`,
+      [userId]
+    );
+
+    return res.status(400).render('pages/communities', {
+      layout: 'main',
+      title: 'Communities',
+      user: req.session.user,
+      communities,
+      error: 'Community name is required'
+    });
+  }
+
+  try {
+    // Insert community and get its id
+    const result = await db.one(
+      `INSERT INTO communities (name, description, community_type, created_by, number_of_members)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING community_id`,
+      [name, description, communityType, userId, 1]
+    );
+
+    const communityId = result.community_id;
+
+    // Auto-join creator
+    await db.none(
+      `INSERT INTO users_communities (user_id, community_id)
+       VALUES ($1, $2)
+       ON CONFLICT (user_id, community_id) DO NOTHING`,
+      [userId, communityId]
+    );
+
+    return res.redirect(`/communities/${communityId}`);
+  } catch (e) {
+    console.log('POST /communities/new error:', e);
+
+    // Duplicate community name
+    if (e.code === '23505') {
+      // Get the existing community with that name
+      const existing = await db.one(
+        `SELECT community_id, name, description
+         FROM communities
+         WHERE name = $1`,
+        [name]
+      );
+
+      // Get user's communities for the page
+      const communities = await db.any(
+        `SELECT c.*
+         FROM communities c
+         JOIN users_communities uc ON uc.community_id = c.community_id
+         WHERE uc.user_id = $1`,
+        [userId]
+      );
+
+      return res.status(200).render('pages/communities', {
+        layout: 'main',
+        title: 'Communities',
+        user: req.session.user,
+        communities,
+        error: 'A community with that name already exists.',
+        showDuplicateModal: true,
+        duplicateCommunity: existing
+      });
+    }
+
+    // Any other DB error
+    const communities = await db.any(
+      `SELECT c.*
+       FROM communities c
+       JOIN users_communities uc ON uc.community_id = c.community_id
+       WHERE uc.user_id = $1`,
+      [userId]
+    );
+
+    return res.status(500).render('pages/communities', {
+      layout: 'main',
+      title: 'Communities',
+      user: req.session.user,
+      communities,
+      error: 'An unexpected error occurred while creating the community.'
+    });
+  }
+});
+
+// Delete a community (only site admin or the community creator)
+app.post('/communities/:community_id/delete', isAuthenticated, async (req, res) => {
+  const communityId = parseInt(req.params.community_id, 10);
+  if (Number.isNaN(communityId)) {
+    return res.status(400).send('Invalid community id');
+  }
+
+  try {
+    const community = await db.oneOrNone(
+      `SELECT * FROM communities WHERE community_id = $1`,
+      [communityId]
+    );
+
+    if (!community) {
+      return res.status(404).send('Community not found');
+    }
+
+    const user = req.session.user;
+    const isSiteAdmin = user.role === 'admin';
+    const isCreator = community.created_by === user.user_id;
+
+    if (!isSiteAdmin && !isCreator) {
+      return res.status(403).send('You are not allowed to delete this community.');
+    }
+
+    // Clean up related data (in case FK ON DELETE CASCADE isn't set)
+    await db.none(
+      `DELETE FROM post_likes
+       WHERE post_id IN (SELECT post_id FROM posts WHERE community_id = $1)`,
+      [communityId]
+    );
+    await db.none(
+      `DELETE FROM posts WHERE community_id = $1`,
+      [communityId]
+    );
+    await db.none(
+      `DELETE FROM users_communities WHERE community_id = $1`,
+      [communityId]
+    );
+    await db.none(
+      `DELETE FROM communities WHERE community_id = $1`,
+      [communityId]
+    );
+
+    return res.redirect('/communities');
+  } catch (e) {
+    console.log('POST /communities/:community_id/delete error:', e);
+    return res.status(500).send('An error occurred while deleting the community.');
+  }
+});
+
 // Handlebars
 const hbs = handlebars.create({
   extname: '.hbs',
@@ -530,11 +679,11 @@ app.post('/register', async (req, res) => {
     });
   } catch (error) {
     console.error('Register error:', error);
-    
+
     const acceptHeader = req.get('Accept') || '';
     const contentType = req.get('Content-Type') || '';
     const wantsJson = acceptHeader.includes('application/json') || contentType.includes('application/json');
-    
+
     if (wantsJson) {
       return res.status(500).json({ message: 'An error occurred during registration' });
     }
