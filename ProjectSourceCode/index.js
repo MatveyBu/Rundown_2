@@ -121,7 +121,11 @@ const plainCommunities = [
 const plainPosts = [
   { text: 'I love playing video games!', user_id: 4, community_id: 5 },
   { text: 'I love sustainability!', user_id: 5, community_id: 6 },
-  { text: 'I need help with my homework!', user_id: 6, community_id: 7 }
+  { text: 'I need help with my homework!', user_id: 6, community_id: 7 },
+  { text: 'We should set up a LAN for this weekend', user_id: 9, community_id: 5},
+  { text: 'Hit me up if you want to join our intermural Flag Football team!', user_id: 7, community_id: 3},
+  { text: 'Does anyone know a good elective for Spring semester?', user_id: 8, community_id: 4},
+  { text: 'Found a blue hydroflask with a Will Vill sticker on it, lmk if it is yours', user_id: 4, community_id: 2}
 ];
 
 const plainUsersCommunities = [
@@ -142,6 +146,7 @@ const plainUsersCommunities = [
   { user_id: 4, community_id: 7 },
   { user_id: 6, community_id: 7 },
   { user_id: 5, community_id: 6 },
+  { user_id: 7, community_id: 3},
   { user_id: 8, community_id: 2},
   { user_id: 8, community_id: 4},
   { user_id: 8, community_id: 6},
