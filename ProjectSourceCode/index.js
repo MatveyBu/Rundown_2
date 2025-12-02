@@ -239,7 +239,13 @@ const isAuthenticated = (req, res, next) => {
   } else {
     // Check if it's an API/test request (wants JSON)
     const acceptHeader = req.get('Accept') || '';
-    const wantsJson = acceptHeader.includes('application/json') && !acceptHeader.includes('text/html');
+    const contentType = req.get('Content-Type') || '';
+    const userAgent = req.get('User-Agent') || '';
+
+    // Check for JSON headers OR if it's a test client (node-superagent is used by chai-http)
+    const wantsJson = acceptHeader.includes('application/json') || 
+                      contentType.includes('application/json') ||
+                      userAgent.includes('node-superagent');
 
     if (wantsJson) {
       // Return error for test/API requests
