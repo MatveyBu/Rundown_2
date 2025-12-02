@@ -73,25 +73,3 @@ CREATE TABLE verification_tokens(
     password VARCHAR(100) NOT NULL
 );
 
-
---Default Sample Data
---The sample data will be uploaded through index.js due to the need to has passwords and the dependencies on users
-/*
-INSERT INTO users(first_name, last_name, username, password, email, role)
-VALUES
-('Matvey','Bubalo', 'MatveyBu', 'hashed_pw1','matvey.bubalo@colorado.edu','admin'),
-('Liam','Clinton','licl','hashed_pw2','liam.clinton@uccs.edu','member'),
-('Sofia','Reed','soree','hashed_pw3','sofia.reed@colostate.edu','moderator');
-*/
---community data
-/*
-INSERT INTO communities(name, description,community_type,created_by, number_of_members)
-VALUES
-('Gaming Club','Community of students interested in video gaming', 'social', 1,1),
-('Sustainability Club','A place for students interested in sustainability to connect','social',2,0),
-('Homework Help','Join a community striving for academic success through collaboration!','academic',3,0);
---users_communities connection test
-INSERT INTO users_communities(user_id, community_id)
-VALUES
-(1,1); --Matvey to the Gaming Club
-*/
