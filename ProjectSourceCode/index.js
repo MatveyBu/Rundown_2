@@ -7,7 +7,7 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const multer = require('multer');
 const fs = require('fs');
-const transporter = require('./email');
+// const transporter = require('./email');
 const pgp = require('pg-promise')(); // To connect to the Postgres DB from the node server
 
 const auth = (req, res, next) => {
@@ -84,7 +84,7 @@ const upload = multer({
 
 // Session middleware
 app.use(session({
-  secret: 'rundown-cu-boulder-secret-key',
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: { secure: false } // set to true if using https
