@@ -110,6 +110,7 @@ describe('Profile Route Tests', () => {
             chai
                 .request(server)
                 .get('/profile')
+                .set('Accept', 'application/json')
                 .end((err, res) => {
                     console.log(res.body);
                     expect(res).to.have.status(401);
