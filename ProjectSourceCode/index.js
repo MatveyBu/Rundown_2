@@ -875,6 +875,72 @@ app.post('/profile/change-password', isAuthenticated, async (req, res) => {
   }
 });
 
+//profile change name and username
+app.post('/profile/change-name', isAuthenticated, async (req, res) => {
+  const firstName = (req.body.first_name || '').trim();
+  const lastName = (req.body.last_name || '').trim();
+  const newUsername = (req.body.new_username || '').trim();
+
+  if (!newUsername) {
+    console.log('change-name: missing username');
+    return res.status(400).render('pages/profile', {
+      layout: 'main',
+      title: 'My Profile',
+      user: req.session.user,
+      error: 'Username cannot be empty'
+    });
+  }
+  try {
+    // does the username exist already
+    const existing = await db.oneOrNone(
+      'SELECT user_id FROM users WHERE username = $1',
+      [newUsername]
+    );
+      //validate
+    if (existing && existing.user_id !== req.session.user.user_id) {
+      console.log('change-name: username already taken');
+      return res.status(400).render('pages/profile', {
+        layout: 'main',
+        title: 'My Profile',
+        user: req.session.user,
+        error: 'That username is already taken'
+      });
+    }
+
+    // update user info
+    const updated = await db.one(
+      `UPDATE users
+         SET first_name = $1,
+             last_name = $2,
+             username = $3
+       WHERE user_id = $4
+       RETURNING *`,
+      [firstName, lastName, newUsername, req.session.user.user_id]
+    );
+
+    //full name fallback used previously
+    updated.name = (updated.first_name ? updated.first_name : '') +
+                   (updated.last_name ? (' ' + updated.last_name) : '');
+    if (!updated.name.trim()) updated.name = updated.username;
+
+    //r edirect to same page with neew data
+    req.session.user = updated;
+
+    console.log('change-name: updated user', updated.user_id);
+
+    return res.redirect('/profile?saved=1');
+  } catch (e) {
+    console.log('POST /profile/change-name error:', e);
+    return res.status(500).render('pages/profile', {
+      layout: 'main',
+      title: 'My Profile',
+      user: req.session.user,
+      error: 'Error in updating name/username'
+    });
+  }
+});
+
+
 app.get('/explore', isAuthenticated, async (req, res) => {
   const communities = await db.any(
     `SELECT c.*

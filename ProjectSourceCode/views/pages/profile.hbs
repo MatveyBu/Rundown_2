@@ -83,15 +83,62 @@
                     <button type="submit" class="btn btn-cu w-100">Update Password</button>
                   </div>
                 </form>
-                {{! script for toggling password change section}}
-                <script>
-                  document.getElementById('password-toggle').addEventListener('click', function() {
-                    const passwordSection = document.getElementById('password-section');
-                    passwordSection.classList.toggle('d-none');
-                  });
-                </script>
               </div>
             </div>
+            {{! change name and username section}}
+            <hr class="my-4">
+            <div class="mb-3">
+              <button type="button" id="name-toggle" class="btn btn-outline-cu btn-sm">
+                Edit Name / Username
+              </button>
+              <div id="name-section" class="mt-3 d-none">
+                <form action="/profile/change-name" method="POST" class="row g-3">
+                  <div class="col-12 col-md-6">
+                    <label for="first_name" class="form-label">First Name</label>
+                    <input id="first_name" name="first_name" type="text" class="form-control" value="{{user.first_name}}">
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="last_name" class="form-label">Last Name</label>
+                    <input id="last_name" name="last_name" type="text" class="form-control" value="{{user.last_name}}">
+                  </div>
+                  <div class="col-12">
+                    <label for="new_username" class="form-label">Username</label>
+                    <input id="new_username" name="new_username" type="text" class="form-control" value="{{user.username}}">
+                  </div>
+                  <div class="col-12">
+                    <button type="submit" class="btn btn-cu w-100">Update Name / Username</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+            {{! scripts to toggle password and name sections}}
+            <script>
+              //pw
+              (function () {
+                var btn = document.getElementById('password-toggle');
+                if (btn) {
+                  btn.addEventListener('click', function () {
+                    var section = document.getElementById('password-section');
+                    if (section) {
+                      section.classList.toggle('d-none');
+                    }
+                  });
+                }
+              })();
+
+              //name and un
+              (function () {
+                var btn2 = document.getElementById('name-toggle');
+                if (btn2) {
+                  btn2.addEventListener('click', function () {
+                    var section2 = document.getElementById('name-section');
+                    if (section2) {
+                      section2.classList.toggle('d-none');
+                    }
+                  });
+                }
+              })();
+            </script>
           </div>
         </div>
         {{> footer}}
