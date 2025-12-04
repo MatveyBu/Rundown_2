@@ -1,0 +1,45 @@
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h3><i class="bi bi-ban"></i> Account Restricted</h3>
+                </div>
+                <div class="card-body">
+                    <h4 class="card-title">{{message}}</h4>
+                    {{#if reason}}
+                    <div class="alert alert-warning mt-3">
+                        <strong>Reason:</strong> {{reason}}
+                    </div>
+                    {{/if}}
+                    {{#if banned_at}}
+                    <p class="text-muted">
+                        <strong>Banned on:</strong> {{banned_at}}
+                    </p>
+                    {{/if}}
+                    <hr>
+                    <p class="mb-0">
+                        If you believe this is a mistake, please contact the administrators at 
+                        <a href="mailto:support@rundown.colorado.edu">support@rundown.colorado.edu</a>
+                    </p>
+                    <div class="mt-4">
+                        <a href="/login" class="btn btn-primary">Return to Login</a>
+                        <a href="/" class="btn btn-secondary">Go Home</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    body {
+        background-color: #f8f9fa;
+    }
+    .card {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .bi-ban {
+        font-size: 1.2rem;
+    }
+</style>
