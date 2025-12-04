@@ -102,10 +102,10 @@ const plainUsers = [
   { username: 'MatveyBu', password: 'pass1', role: 'admin', first_name: 'Matvey', last_name: 'Bubalo', email: 'matvey.bubalo@colorado.edu' },
   { username: 'licl', password: 'pass2', role: 'member', first_name: 'Liam', last_name: 'Clinton', email: 'liam.clinton@colorado.edu' },
   { username: 'soree', password: 'pass3', role: 'member', first_name: 'Sofia', last_name: 'Reed', email: 'sofia.reed@colorado.edu' },
-  { username: 'tmit', password: 'pass4', role: 'member', first_name: 'Tom', last_name: 'Mitchell', email: 'tom.mitchell@colorado.edu'},
-  { username: 'mlee', password: 'pass5', role: 'member', first_name: 'Mia', last_name: 'Lee', email: 'mia.lee@colorado.edu'},
-  { username: 'ivsh', password: 'pass6', role: 'member', first_name: 'Ivan', last_name: 'Shishkin', email: 'ivan.shishkin@colorado.edu'},
-  { username: 'kebr', password: 'pass7', role: 'member', first_name: 'Kevin', last_name: 'Brown', email: 'kevin.brown@colorado.edu'}
+  { username: 'tmit', password: 'pass4', role: 'member', first_name: 'Tom', last_name: 'Mitchell', email: 'tom.mitchell@colorado.edu' },
+  { username: 'mlee', password: 'pass5', role: 'member', first_name: 'Mia', last_name: 'Lee', email: 'mia.lee@colorado.edu' },
+  { username: 'ivsh', password: 'pass6', role: 'member', first_name: 'Ivan', last_name: 'Shishkin', email: 'ivan.shishkin@colorado.edu' },
+  { username: 'kebr', password: 'pass7', role: 'member', first_name: 'Kevin', last_name: 'Brown', email: 'kevin.brown@colorado.edu' }
 ];
 
 const plainCommunities = [
@@ -122,10 +122,10 @@ const plainPosts = [
   { text: 'I love playing video games!', user_id: 4, community_id: 5 },
   { text: 'I love sustainability!', user_id: 5, community_id: 6 },
   { text: 'I need help with my homework!', user_id: 6, community_id: 7 },
-  { text: 'We should set up a LAN for this weekend', user_id: 9, community_id: 5},
-  { text: 'Hit me up if you want to join our intermural Flag Football team!', user_id: 7, community_id: 3},
-  { text: 'Does anyone know a good elective for Spring semester?', user_id: 8, community_id: 4},
-  { text: 'Found a blue hydroflask with a Will Vill sticker on it, lmk if it is yours', user_id: 4, community_id: 2}
+  { text: 'We should set up a LAN for this weekend', user_id: 9, community_id: 5 },
+  { text: 'Hit me up if you want to join our intermural Flag Football team!', user_id: 7, community_id: 3 },
+  { text: 'Does anyone know a good elective for Spring semester?', user_id: 8, community_id: 4 },
+  { text: 'Found a blue hydroflask with a Will Vill sticker on it, lmk if it is yours', user_id: 4, community_id: 2 }
 ];
 
 const plainUsersCommunities = [
@@ -146,14 +146,14 @@ const plainUsersCommunities = [
   { user_id: 4, community_id: 7 },
   { user_id: 6, community_id: 7 },
   { user_id: 5, community_id: 6 },
-  { user_id: 7, community_id: 3},
-  { user_id: 8, community_id: 2},
-  { user_id: 8, community_id: 4},
-  { user_id: 8, community_id: 6},
-  { user_id: 9, community_id: 1},
-  { user_id: 9, community_id: 3},
-  { user_id: 9, community_id: 5},
-  { user_id: 9, community_id: 7}
+  { user_id: 7, community_id: 3 },
+  { user_id: 8, community_id: 2 },
+  { user_id: 8, community_id: 4 },
+  { user_id: 8, community_id: 6 },
+  { user_id: 9, community_id: 1 },
+  { user_id: 9, community_id: 3 },
+  { user_id: 9, community_id: 5 },
+  { user_id: 9, community_id: 7 }
 ];
 
 const plainPostLikes = [
@@ -259,9 +259,9 @@ const isAuthenticated = (req, res, next) => {
     const userAgent = req.get('User-Agent') || '';
 
     // Check for JSON headers OR if it's a test client (node-superagent is used by chai-http)
-    const wantsJson = acceptHeader.includes('application/json') || 
-                      contentType.includes('application/json') ||
-                      userAgent.includes('node-superagent');
+    const wantsJson = acceptHeader.includes('application/json') ||
+      contentType.includes('application/json') ||
+      userAgent.includes('node-superagent');
 
     if (wantsJson) {
       // Return error for test/API requests
@@ -805,7 +805,7 @@ app.post('/profile', isAuthenticated, async (req, res) => {
 
     //reload fresh data for the session + page
     const user = await db.one(
-      'SELECT user_id, username, email, role, first_name, last_name, profile_picture, created_at, college_id, bio FROM users WHERE user_id = $1',
+      'SELECT user_id, username, email, role, first_name, last_name, profile_picture, created_at, bio FROM users WHERE user_id = $1',
       [req.session.user.user_id]
     );
 
