@@ -197,13 +197,15 @@ async function initializeSampleData() {
       );
     }
     for (const connection of plainUsersCommunities) {
-      await db.none(
+      const existingConnection = await db.oneOrNone(
         `INSERT INTO users_communities (user_id, community_id)
         VALUES ($1,$2)
         ON CONFLICT (user_id, community_id) DO NOTHING`,
         [connection.user_id, connection.community_id]
       )
-      await db.none('UPDATE communities SET number_of_members = number_of_members + 1 WHERE community_id = $1', [connection.community_id]);
+      if (existingConnection) {
+        await db.none('UPDATE communities SET number_of_members = number_of_members + 1 WHERE community_id = $1', [connection.community_id]);
+      }
     }
     // Insert posts and get their actual IDs
     const insertedPostIds = [];
