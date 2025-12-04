@@ -248,6 +248,73 @@ async function initializeSampleData() {
   }
 }
 
+// Middleware to check if user is banned site-wide
+const isNotBanned = async (req, res, next) => {
+  if (!req.session.user) {
+    return next();
+  }
+  try {
+    const user = await db.oneOrNone(
+      'SELECT is_banned FROM users WHERE user_id = $1',
+      [req.session.user.user_id]
+    );
+    if (user && user.is_banned) {
+      req.session.destroy();
+      return res.render('pages/banned', {
+        message: 'Your account has been banned from Rundown.',
+        reason: 'Site-wide ban'
+      });
+    }
+    next();
+  } catch (error) {
+    console.error('Error checking ban status:', error);
+    next();
+  }
+};
+
+// Middleware to check if user is banned from a specific community
+const checkCommunityBan = async (req, res, next) => {
+  const communityId = parseInt(req.params.community_id, 10);
+  if (!req.session.user || Number.isNaN(communityId)) {
+    return next();
+  }
+  try {
+    const ban = await db.oneOrNone(
+      'SELECT reason, banned_at FROM community_bans WHERE user_id = $1 AND community_id = $2',
+      [req.session.user.user_id, communityId]
+    );
+    if (ban) {
+      return res.render('pages/banned', {
+        message: 'You have been banned from this community.',
+        reason: ban.reason || 'No reason provided',
+        banned_at: ban.banned_at
+      });
+    }
+    next();
+  } catch (error) {
+    console.error('Error checking community ban:', error);
+    next();
+  }
+};
+
+// Middleware to check if user is admin
+const isAdmin = (req, res, next) => {
+  if (req.session.user && req.session.user.role === 'admin') {
+    next();
+  } else {
+    res.status(403).json({ error: 'Access denied. Admin privileges required.' });
+  }
+};
+
+// Middleware to check if user is moderator or admin
+const isModerator = (req, res, next) => {
+  if (req.session.user && (req.session.user.role === 'moderator' || req.session.user.role === 'admin')) {
+    next();
+  } else {
+    res.status(403).json({ error: 'Access denied. Moderator privileges required.' });
+  }
+};
+
 // Middleware to check if user is authenticated
 const isAuthenticated = (req, res, next) => {
   if (req.session.user) {
@@ -933,7 +1000,7 @@ app.get('/communities', isAuthenticated, async (req, res) => {
   });
 });
 
-app.get('/communities/:community_id', isAuthenticated, async (req, res) => {
+app.get('/communities/:community_id', isAuthenticated, isNotBanned, checkCommunityBan, async (req, res) => {
   const community = await db.one(
     `SELECT * FROM communities WHERE community_id = $1`,
     [req.params.community_id]
@@ -957,12 +1024,17 @@ app.get('/communities/:community_id', isAuthenticated, async (req, res) => {
     post.user = await db.one('SELECT * FROM users WHERE user_id = $1', [post.user_id]);
     post.likes = likes.find(like => like.post_id === post.post_id)?.like_count || 0;
   }
+  
+  // Check if user can moderate (is moderator or admin)
+  const canModerate = req.session.user && (req.session.user.role === 'moderator' || req.session.user.role === 'admin');
+  
   res.render('pages/community', {
     layout: 'main',
     title: 'Community',
     community: community,
     user: req.session.user,
     posts: posts,
+    canModerate: canModerate
   });
 });
 
@@ -1087,6 +1159,84 @@ app.get('/activity', isAuthenticated, async (req, res) => {
   });
 });
 
+
+// Ban user site-wide (admin only)
+app.post('/admin/ban-user/:user_id', isAuthenticated, isAdmin, async (req, res) => {
+  const userId = parseInt(req.params.user_id, 10);
+  const reason = req.body.reason || 'No reason provided';
+  
+  if (Number.isNaN(userId)) {
+    return res.status(400).json({ error: 'Invalid user ID' });
+  }
+  
+  try {
+    await db.none('UPDATE users SET is_banned = TRUE WHERE user_id = $1', [userId]);
+    res.json({ success: true, message: 'User banned successfully' });
+  } catch (error) {
+    console.error('Error banning user:', error);
+    res.status(500).json({ error: 'Failed to ban user' });
+  }
+});
+
+// Unban user site-wide (admin only)
+app.post('/admin/unban-user/:user_id', isAuthenticated, isAdmin, async (req, res) => {
+  const userId = parseInt(req.params.user_id, 10);
+  
+  if (Number.isNaN(userId)) {
+    return res.status(400).json({ error: 'Invalid user ID' });
+  }
+  
+  try {
+    await db.none('UPDATE users SET is_banned = FALSE WHERE user_id = $1', [userId]);
+    res.json({ success: true, message: 'User unbanned successfully' });
+  } catch (error) {
+    console.error('Error unbanning user:', error);
+    res.status(500).json({ error: 'Failed to unban user' });
+  }
+});
+
+// Ban user from community (moderator or admin)
+app.post('/communities/:community_id/ban/:user_id', isAuthenticated, isModerator, async (req, res) => {
+  const communityId = parseInt(req.params.community_id, 10);
+  const userId = parseInt(req.params.user_id, 10);
+  const reason = req.body.reason || 'No reason provided';
+  
+  if (Number.isNaN(communityId) || Number.isNaN(userId)) {
+    return res.status(400).json({ error: 'Invalid community or user ID' });
+  }
+  
+  try {
+    await db.none(
+      'INSERT INTO community_bans (user_id, community_id, reason) VALUES ($1, $2, $3) ON CONFLICT (user_id, community_id) DO UPDATE SET reason = $3, banned_at = CURRENT_TIMESTAMP',
+      [userId, communityId, reason]
+    );
+    res.json({ success: true, message: 'User banned from community' });
+  } catch (error) {
+    console.error('Error banning user from community:', error);
+    res.status(500).json({ error: 'Failed to ban user from community' });
+  }
+});
+
+// Unban user from community (moderator or admin)
+app.post('/communities/:community_id/unban/:user_id', isAuthenticated, isModerator, async (req, res) => {
+  const communityId = parseInt(req.params.community_id, 10);
+  const userId = parseInt(req.params.user_id, 10);
+  
+  if (Number.isNaN(communityId) || Number.isNaN(userId)) {
+    return res.status(400).json({ error: 'Invalid community or user ID' });
+  }
+  
+  try {
+    await db.none(
+      'DELETE FROM community_bans WHERE user_id = $1 AND community_id = $2',
+      [userId, communityId]
+    );
+    res.json({ success: true, message: 'User unbanned from community' });
+  } catch (error) {
+    console.error('Error unbanning user from community:', error);
+    res.status(500).json({ error: 'Failed to unban user from community' });
+  }
+});
 
 app.get('/welcome', (req, res) => {
   res.json({ success: true, message: 'Welcome!' });
