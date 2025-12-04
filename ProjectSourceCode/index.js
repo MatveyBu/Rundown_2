@@ -203,6 +203,7 @@ async function initializeSampleData() {
         ON CONFLICT (user_id, community_id) DO NOTHING`,
         [connection.user_id, connection.community_id]
       )
+      await db.none('UPDATE communities SET number_of_members = number_of_members + 1 WHERE community_id = $1', [connection.community_id]);
     }
     // Insert posts and get their actual IDs
     const insertedPostIds = [];
@@ -969,6 +970,7 @@ app.post('/communities/:community_id/join', isAuthenticated, async (req, res) =>
   }
   try {
     await db.none('INSERT INTO users_communities (user_id, community_id) VALUES ($1, $2)', [req.session.user.user_id, communityId]);
+    await db.none('UPDATE communities SET number_of_members = number_of_members + 1 WHERE community_id = $1', [communityId]);
     return res.status(200).json({ success: true });
   } catch (e) {
     console.log('POST /communities/:community_id/join error:', e);
@@ -1024,10 +1026,10 @@ app.get('/communities/:community_id', isAuthenticated, isNotBanned, checkCommuni
     post.user = await db.one('SELECT * FROM users WHERE user_id = $1', [post.user_id]);
     post.likes = likes.find(like => like.post_id === post.post_id)?.like_count || 0;
   }
-  
+
   // Check if user can moderate (is moderator or admin)
   const canModerate = req.session.user && (req.session.user.role === 'moderator' || req.session.user.role === 'admin');
-  
+
   res.render('pages/community', {
     layout: 'main',
     title: 'Community',
@@ -1164,11 +1166,11 @@ app.get('/activity', isAuthenticated, async (req, res) => {
 app.post('/admin/ban-user/:user_id', isAuthenticated, isAdmin, async (req, res) => {
   const userId = parseInt(req.params.user_id, 10);
   const reason = req.body.reason || 'No reason provided';
-  
+
   if (Number.isNaN(userId)) {
     return res.status(400).json({ error: 'Invalid user ID' });
   }
-  
+
   try {
     await db.none('UPDATE users SET is_banned = TRUE WHERE user_id = $1', [userId]);
     res.json({ success: true, message: 'User banned successfully' });
@@ -1181,11 +1183,11 @@ app.post('/admin/ban-user/:user_id', isAuthenticated, isAdmin, async (req, res) 
 // Unban user site-wide (admin only)
 app.post('/admin/unban-user/:user_id', isAuthenticated, isAdmin, async (req, res) => {
   const userId = parseInt(req.params.user_id, 10);
-  
+
   if (Number.isNaN(userId)) {
     return res.status(400).json({ error: 'Invalid user ID' });
   }
-  
+
   try {
     await db.none('UPDATE users SET is_banned = FALSE WHERE user_id = $1', [userId]);
     res.json({ success: true, message: 'User unbanned successfully' });
@@ -1200,11 +1202,11 @@ app.post('/communities/:community_id/ban/:user_id', isAuthenticated, isModerator
   const communityId = parseInt(req.params.community_id, 10);
   const userId = parseInt(req.params.user_id, 10);
   const reason = req.body.reason || 'No reason provided';
-  
+
   if (Number.isNaN(communityId) || Number.isNaN(userId)) {
     return res.status(400).json({ error: 'Invalid community or user ID' });
   }
-  
+
   try {
     await db.none(
       'INSERT INTO community_bans (user_id, community_id, reason) VALUES ($1, $2, $3) ON CONFLICT (user_id, community_id) DO UPDATE SET reason = $3, banned_at = CURRENT_TIMESTAMP',
@@ -1221,11 +1223,11 @@ app.post('/communities/:community_id/ban/:user_id', isAuthenticated, isModerator
 app.post('/communities/:community_id/unban/:user_id', isAuthenticated, isModerator, async (req, res) => {
   const communityId = parseInt(req.params.community_id, 10);
   const userId = parseInt(req.params.user_id, 10);
-  
+
   if (Number.isNaN(communityId) || Number.isNaN(userId)) {
     return res.status(400).json({ error: 'Invalid community or user ID' });
   }
-  
+
   try {
     await db.none(
       'DELETE FROM community_bans WHERE user_id = $1 AND community_id = $2',
