@@ -8,9 +8,10 @@ CSCI 3308 Final Project
 
 **Brief Application description**
 
-We are intending to build a college forum page that allows college students within their universities to connect with fellow students in a range of communities. This could range from finding housing, club/sports pages, or even general class and campus-wide communities. The page will allow students to find a secure, reliable, and widely used forum that connects them with students with similar interests.
-
-We have three major roles: admins, moderators, and users. Admins will control the page UI and moderator access for a given university, allowing them to choose colors and create certain communities. Moderators will control the specific functions within certain subtopics and moderate those channels, similar to Discord. The general user base (students) will then be able to join/get invited to specific channels that fit their needs. Some pages will be publicly available to the community like the housing page, lost id page, etc.
+We are intending to build a college forum page that allows college students within their universities to connect with fellow students in a range of communities. This could range from finding housing, club/sports pages, or even general class and campus-wide communities.
+The page will allow students to find a secure, reliable, and widely used forum that connects them with students with similar interests.
+Admins will control the pages and communities and assign moderators to communities. Moderators will control the specific functions within certain subtopics and moderate those channels, similar to Discord. 
+The general user base (students) will then be able to join specific channels that fit their needs. Pages are publicly available to the community like the housing page, lost id page, etc.
 
 
 **Contributors**
