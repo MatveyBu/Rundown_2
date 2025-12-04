@@ -197,13 +197,14 @@ async function initializeSampleData() {
       );
     }
     for (const connection of plainUsersCommunities) {
-      const existingConnection = await db.oneOrNone(
+      const newConnection = await db.oneOrNone(
         `INSERT INTO users_communities (user_id, community_id)
         VALUES ($1,$2)
-        ON CONFLICT (user_id, community_id) DO NOTHING`,
+        ON CONFLICT (user_id, community_id) DO NOTHING
+        RETURNING *`,
         [connection.user_id, connection.community_id]
       )
-      if (existingConnection) {
+      if (newConnection) {
         await db.none('UPDATE communities SET number_of_members = number_of_members + 1 WHERE community_id = $1', [connection.community_id]);
       }
     }
